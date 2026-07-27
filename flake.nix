@@ -31,6 +31,13 @@
           ./hosts/kvm-test/configuration.nix
         ];
       };
+      benjidev-nixos = nixpkgs.lib.nixosSystem {
+ 	system = "x86_64-linux";
+	specialArgs = { inherit inputs users; };
+	modules = [
+	  ./hosts/benjidev-nixos/configuration.nix
+	];
+      };
       # hostname = nixpkgs.lib.nixosSystem {
       #   system = "x86_64-linux";
       #   specialArgs = { inherit inputs users; };

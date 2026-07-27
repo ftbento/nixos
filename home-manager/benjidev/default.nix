@@ -33,9 +33,9 @@
       ];
     };
 
-    age.secrets."github-ssh-key" = {
-      file = ../../../secrets/github-ssh-key.age;
-    };
+#    age.secrets."github-ssh-key" = {
+ #     file = ../../../secrets/github-ssh-key.age;
+  #  };
     # SSH configuration with agenix for GitHub
     # programs.ssh = {
     #   enable = true;
