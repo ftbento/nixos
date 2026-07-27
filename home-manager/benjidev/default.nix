@@ -6,9 +6,9 @@
     extraGroups = [ "networkmanager" "wheel" ];
     shell = pkgs.fish; # primary global shell for this user
   };
-
+  
   # Home Manager configuration
-  home-manager.users.benjidev = { config, pkgs, ... }: {
+  home-manager.users.benjidev = {
     imports = [
       ./modules
     ];

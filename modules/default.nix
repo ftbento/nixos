@@ -1,7 +1,8 @@
 { config, pkgs, ... }: {
   imports = [
     ./core
-    ./wm/gnome.nix
     ./software
+    ./tweaks
+    ./wm/gnome.nix
   ];
 }

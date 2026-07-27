@@ -2,10 +2,10 @@
   description = "NixOS configuration";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-25.11";
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     
     home-manager = {
-      url = "github:nix-community/home-manager/release-25.11";
+      url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
@@ -24,25 +24,18 @@
     users = import ./home-manager/users.nix;
   in {
     nixosConfigurations = {
-      kvm-test = nixpkgs.lib.nixosSystem {
+      nixos-workstation = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs users; };
         modules = [
-          ./hosts/kvm-test/configuration.nix
+          ./hosts/nixos-workstation/configuration.nix
         ];
       };
-      benjidev-nixos = nixpkgs.lib.nixosSystem {
- 	system = "x86_64-linux";
-	specialArgs = { inherit inputs users; };
-	modules = [
-	  ./hosts/benjidev-nixos/configuration.nix
-	];
-      };
-      # hostname = nixpkgs.lib.nixosSystem {
+      # <hostname> = nixpkgs.lib.nixosSystem {
       #   system = "x86_64-linux";
       #   specialArgs = { inherit inputs users; };
       #   modules = [
-      #     ./hosts/hostname/configuration.nix
+      #     ./hosts/<hostname>/configuration.nix
       #   ];
       # };
     };

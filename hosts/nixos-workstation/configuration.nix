@@ -9,18 +9,15 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  networking.hostName = "kvm-test";
+  networking.hostName = "nixos-workstation";
 
   # Host-specific system packages
   environment.systemPackages = with pkgs; [
-    inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
+	  vscode
   ];
 
-  # Bootloader
-  boot.loader.grub.enable = true;
-  boot.loader.grub.device = "/dev/vda";
-  boot.loader.grub.useOSProber = true;
+  boot.loader.grub.theme = ./tsushima;
 
   # System state version - DO NOT CHANGE this after first install
-  system.stateVersion = "25.11";
+  system.stateVersion = "26.05";
 }

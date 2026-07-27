@@ -13,8 +13,9 @@
     ];
 
     shellAliases = {
-      nhswitch = "nh os switch";       
-      nhupdate = "nix flake update --flake ~/nixos && nh os switch"; 
+      nhswitch = "nh os switch ~/nixos";       
+      nhboot = "nh os boot  ~/nixos";
+      nhupdate = "nix flake update --flake ~/nixos && nh os switch  ~/nixos"; 
       nhclean = "nh clean all"; 
 
       ff = "fastfetch";

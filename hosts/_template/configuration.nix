@@ -16,6 +16,16 @@
 
   ];
 
+  boot.loader.grub = {
+    enable = true;
+    efi.canTouchEfiVariables = true;
+    grub = {
+      useOSProber = true;
+      devices = [ "nodev" ];
+      efiSupport = true;
+    }
+  };
+
   # System state version - DO NOT CHANGE this after first install
-  system.stateVersion = "25.11"; # CHANGE THIS TO MATCH YOUR NIXOS VERSION
+  system.stateVersion = "26.05"; # CHANGE THIS TO MATCH YOUR NIXOS VERSION
 }
