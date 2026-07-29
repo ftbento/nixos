@@ -13,13 +13,20 @@ My personal NixOS configurations with flake dependency management for managing m
 │   └── ...
 ├── modules/                # Shared NixOS modules
 │   ├── default.nix         # Global modules
-│   └── ...
+│   ├── core/               # Core system modules
+│   ├── software/           # System software modules
+│   ├── tweaks/             # System tweaks
+│   ├── de/                 # Desktop environment modules
+│   └── home/               # Shared home-manager modules
+│       ├── default.nix     # Imports all shared home modules
+│       ├── fish.nix        # Fish shell (myUser.fish.*)
+│       ├── git.nix         # Git (myUser.git.*)
+│       ├── kitty.nix       # Kitty terminal (myUser.kitty.*)
+│       └── fastfetch/      # Fastfetch (myUser.fastfetch.*)
 └── home-manager/           # User configurations
-    ├── users/              # Individual user files
-    │   └── username.nix    # Combined system + Home Manager config
-    │   └── default.nix     # Export each user with host accessible names
-    │   └── _template.nix   # User configuration template
-    ├── modules/            # Shared home-manager modules
+    ├── users.nix           # Export each user with host accessible names
+    ├── benjidev.nix        # Thin user profile (sets myUser.* options)
+    └── _template-username.nix  # User configuration template
 ```
 
 ## Adding a New Host
@@ -89,18 +96,32 @@ per-host imports in configuration.nix
 
 ## User Management
 
-Users are managed through combined system and Home Manager configuration:
-- System user creation and Home Manager settings are combined in `home-manager/<username>/default.nix`
-- Users must be added to `users.nix` to appear through `users.username`
+Users are managed through thin profile files that import shared modules and set per-user options:
+
+- System user creation and Home Manager settings are combined in `home-manager/<username>.nix`
+- Shared home-manager modules live in `modules/home/` and expose options under the `myUser.<module>` namespace
+- Users must be added to `home-manager/users.nix` to appear through `users.<username>`
 
 ### Adding a New User
 
 1. **Copy the user configuration template:**
    ```bash
-   cp home-manager/_template-username home-manager/<username>
+   cp home-manager/_template-username.nix home-manager/<username>.nix
    ```
 
-2. **Add the user to a host:**
+2. **Register the user in `home-manager/users.nix`:**
+   ```nix
+   {
+     <username> = ./<username>.nix;
+   }
+   ```
+
+3. **Edit the user profile:**
+   - Replace `<username>` and `<shell>` placeholders
+   - Set `myUser.*` options to enable/configure shared modules (fish, git, kitty, fastfetch)
+   - Add user-specific packages in the `home.packages` list
+
+4. **Add the user to a host:**
    ```nix
    # hosts/<hostname>/configuration.nix
    imports = [

@@ -1,10 +1,10 @@
 let
   # username = "ssh-ed25519 PUBLIC_KEY";
-  benjidev-kvm-test = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPerJClod7OwLvQXBJDlDq/avyV5l2nqW/RH2jqhfqbQ benjidev@kvm-test";
+  benjidev_nixos-workstation = "ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIGESGigvG8ZWWQIv5S+Kg7ECkbwFxSoBIX29tNh/BmZu benjidev@nixos-workstation";
 in
 {
   # "github-ssh-key.age".publicKeys = [ USERNAME-HOSTNAME ];
-  "github-ssh-key.age".publicKeys = [ benjidev-kvm-test ];
+  "github-ftbento.age".publicKeys = [ benjidev_nixos-workstation ];
 }
 
 # paste the private key in the editor
