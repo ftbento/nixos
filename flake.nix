@@ -18,6 +18,11 @@
       url = "github:ryantm/agenix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    noctalia = {
+      url = "github:noctalia-dev/noctalia-shell/";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs: let
@@ -31,13 +36,6 @@
           ./hosts/nixos-workstation/configuration.nix
         ];
       };
-      # <hostname> = nixpkgs.lib.nixosSystem {
-      #   system = "x86_64-linux";
-      #   specialArgs = { inherit inputs users; };
-      #   modules = [
-      #     ./hosts/<hostname>/configuration.nix
-      #   ];
-      # };
     };
   };
 }

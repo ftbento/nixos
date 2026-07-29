@@ -12,6 +12,7 @@
       { name = "grc"; src = pkgs.fishPlugins.grc.src; }
     ];
 
+    # TODO: make global somehow?
     shellAliases = {
       nhswitch = "nh os switch ~/nixos";       
       nhboot = "nh os boot  ~/nixos";

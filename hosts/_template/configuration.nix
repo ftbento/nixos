@@ -16,15 +16,7 @@
 
   ];
 
-  boot.loader.grub = {
-    enable = true;
-    efi.canTouchEfiVariables = true;
-    grub = {
-      useOSProber = true;
-      devices = [ "nodev" ];
-      efiSupport = true;
-    }
-  };
+  boot.loader.grub.theme = ./THEME_FOLDER
 
   # System state version - DO NOT CHANGE this after first install
   system.stateVersion = "26.05"; # CHANGE THIS TO MATCH YOUR NIXOS VERSION

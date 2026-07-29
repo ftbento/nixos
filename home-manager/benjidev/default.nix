@@ -3,10 +3,10 @@
   programs.fish.enable = true; # allows access to fish outside of home-manager for below
   users.users.benjidev = {
     isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" ];
+    extraGroups = [ "networkmanager" "wheel" "docker"];
     shell = pkgs.fish; # primary global shell for this user
   };
-  
+
   # Home Manager configuration
   home-manager.users.benjidev = {
     imports = [
@@ -20,7 +20,8 @@
       packages = with pkgs; [
         # Desktop Apps
         # obsidian
-        # vesktop
+        vesktop
+        opencode
 
         # CLI
         kitty

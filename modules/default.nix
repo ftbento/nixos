@@ -3,6 +3,6 @@
     ./core
     ./software
     ./tweaks
-    ./wm/gnome.nix
+    ./de/gnome.nix
   ];
 }

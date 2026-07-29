@@ -11,6 +11,7 @@
     ./agenix.nix
     ./systemd.nix
     ./boot/grub.nix
+    ./gpu/nvidia.nix
   ];
 }
 

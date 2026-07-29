@@ -4,6 +4,5 @@
     ./git.nix
     ./kitty.nix
     ./fastfetch
-    ./man.nix
   ];
 }
