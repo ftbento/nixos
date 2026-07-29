@@ -1,31 +1,35 @@
-{ config, pkgs, inputs, ... }: {
-  # System-level user creation
+{ config, pkgs, inputs, ... }: let
+  username = "benjidev";
+in {
   programs.fish.enable = true;
-  users.users.benjidev = {
+  users.users.${username} = {
     isNormalUser = true;
     extraGroups = [ "networkmanager" "wheel" "docker" ];
     shell = pkgs.fish;
   };
 
-  # Home Manager configuration
-  home-manager.users.benjidev = {
-    imports = [ ./modules ];
+  age.identityPaths = [ "/home/${username}/.ssh/id_ed25519" ];
+  age.secrets."github-ftbento" = {
+    file = ../secrets/github-ftbento.age;
+    owner = username;
+  };
+
+  home-manager.users.${username} = {
+    imports = [
+      ./modules
+    ];
 
     home = {
-      username = "benjidev";
-      homeDirectory = "/home/benjidev";
+      username = username;
+      homeDirectory = "/home/${username}";
       stateVersion = "25.11";
       packages = with pkgs; [
-        # Desktop Apps
         vesktop
         opencode
-
-        # CLI
         kitty
         grc
       ];
     };
-
     myUser.fish = {
       enable = true;
       shellAliases = {
@@ -33,9 +37,7 @@
         nhboot = "nh os boot  ~/nixos";
         nhupdate = "nix flake update --flake ~/nixos && nh os switch  ~/nixos";
         nhclean = "nh clean all";
-
         ff = "fastfetch";
-
         ".." = "cd ..";
       };
     };
@@ -63,17 +65,16 @@
       enable = true;
     };
 
-    # age.secrets."github-ssh-key" = {
-    #   file = ../../../secrets/github-ssh-key.age;
-    # };
-    # programs.ssh = {
-    #   enable = true;
-    #   matchBlocks = {
-    #     "github.com" = {
-    #       identityFile = "/run/agenix/github-ssh-key";
-    #       identitiesOnly = true;
-    #     };
-    #   };
-    # };
+    programs.ssh = {
+      enable = true;
+      enableDefaultConfig = false;
+      
+      settings = {
+        "github.com" = {
+          identityFile = config.age.secrets."github-ftbento".path;
+          identitiesOnly = true;
+        };
+      };
+    };
   };
 }

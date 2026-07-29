@@ -7,6 +7,5 @@
     useGlobalPkgs = true;
     useUserPackages = true;
     extraSpecialArgs = { inherit inputs; };
-    # Users are now managed in modules/users/*.nix
   };
 }
