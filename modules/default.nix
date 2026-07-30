@@ -3,6 +3,7 @@
     ./core
     ./software
     ./tweaks
+    ./wm/hyprland.nix
     ./de/gnome.nix
   ];
 }

@@ -61,6 +61,10 @@ in {
       };
     };
 
+    myUser.hyprland.enable = true;
+    myUser.waybar.enable = true;
+    myUser.wofi.enable = true;
+
     myUser.fastfetch = {
       enable = true;
     };
