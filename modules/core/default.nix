@@ -10,7 +10,6 @@
     ./nh.nix
     ./agenix.nix
     ./systemd.nix
-    ./boot/grub.nix
   ];
 }
 

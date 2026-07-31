@@ -1,10 +1,11 @@
 { config, pkgs, inputs, ... }: let
   username = "benjidev";
 in {
+  # System-level user creation
   programs.fish.enable = true;
   users.users.${username} = {
     isNormalUser = true;
-    extraGroups = [ "networkmanager" "wheel" "docker" ];
+    extraGroups = [ "networkmanager" "wheel" ];
     shell = pkgs.fish;
   };
 
@@ -14,41 +15,62 @@ in {
     owner = username;
   };
 
+  # Home Manager configuration
   home-manager.users.${username} = {
     imports = [
       ./modules
+      inputs.caelestia-shell.homeManagerModules.default
     ];
 
     home = {
       username = username;
       homeDirectory = "/home/${username}";
-      stateVersion = "25.11";
+      stateVersion = "26.05";
       packages = with pkgs; [
         vesktop
+        unzip
         opencode
-        kitty
+        yt-dlp
         grc
+        cava
+        playerctl
+        jq
+        wlogout
+        nerd-fonts.jetbrains-mono
+        swaynotificationcenter
+        # inputs.spotatui.packages.${pkgs.stdenv.hostPlatform.system}.default
       ];
     };
-    myUser.fish = {
+
+    fonts.fontconfig.enable = true;
+
+    xdg.configFile."hypr" = {
+      source = ../config/hypr;
+      recursive = true;
+    };
+
+    home.fastfetch.enable = true;
+
+    home.fish = {
       enable = true;
       shellAliases = {
         nhswitch = "nh os switch ~/nixos";
         nhboot = "nh os boot  ~/nixos";
         nhupdate = "nix flake update --flake ~/nixos && nh os switch  ~/nixos";
-        nhclean = "nh clean all";
+        nhclean = "nh clean all --keep-since 4d --keep 3";
+        nhlist = "nixos-rebuild list-generations";
         ff = "fastfetch";
         ".." = "cd ..";
       };
     };
 
-    myUser.git = {
+    home.git = {
       enable = true;
       userName = "ftbento";
       userEmail = "ftbento@users.noreply.github.com";
     };
 
-    myUser.kitty = {
+    home.kitty = {
       enable = true;
       settings = {
         confirm_os_window_close = 0;
@@ -61,11 +83,13 @@ in {
       };
     };
 
-    myUser.hyprland.enable = true;
-    myUser.waybar.enable = true;
-    myUser.wofi.enable = true;
+    programs.caelestia = {
+      enable = true;
+      systemd.enable = false;
+      cli.enable = true;
+    };
 
-    myUser.fastfetch = {
+    home.yazi = {
       enable = true;
     };
 

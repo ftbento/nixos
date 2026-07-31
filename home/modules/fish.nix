@@ -1,5 +1,8 @@
-{ config, pkgs, lib, ... }: {
-  options.myUser.fish = {
+{ config, pkgs, lib, ... }: let
+    cfg = config.home.fish;
+  in 
+  {
+  options.home.fish = {
     enable = lib.mkEnableOption "fish shell configuration";
     generateCompletions = lib.mkOption {
       type = lib.types.bool;
@@ -13,9 +16,7 @@
     };
   };
 
-  config = let
-    cfg = config.myUser.fish;
-  in lib.mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     programs.fish = {
       enable = true;
       generateCompletions = cfg.generateCompletions;

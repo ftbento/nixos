@@ -1,5 +1,8 @@
-{ config, lib, ... }: {
-  options.myUser.git = {
+{ config, lib, ... }: let
+    cfg = config.home.git;
+  in 
+  {
+  options.home.git = {
     enable = lib.mkEnableOption "git configuration";
     userName = lib.mkOption {
       type = lib.types.str;
@@ -13,9 +16,7 @@
     };
   };
 
-  config = let
-    cfg = config.myUser.git;
-  in lib.mkIf cfg.enable {
+  config = lib.mkIf cfg.enable {
     programs.git = {
       enable = true;
       settings = {

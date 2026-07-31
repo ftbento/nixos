@@ -12,8 +12,14 @@
 
   networking.hostName = "nixos-workstation";
 
-  myDesktop.gnome.enable = false;
-  myDesktop.hyprland.enable = true;
+  workstation = {
+    hyprland.enable = true;
+  };
+
+	services.displayManager.sddm = {
+    enable =true;
+    wayland.enable = true;
+  };
 
   # Host-specific system packages
   environment.systemPackages = with pkgs; [
@@ -21,7 +27,20 @@
 	  vscode
   ];
 
-  boot.loader.grub.theme = ./tsushima;
+  boot = {
+    loader = {
+      efi.canTouchEfiVariables = true;
+      grub = {
+        enable = true;
+        useOSProber = true;
+        devices = [ "nodev" ];
+        efiSupport = true;
+
+        theme = ./tsushima;
+        configurationLimit = 5;  # max 5 versions in bootloader
+      };
+    };
+  };
 
   # System state version - DO NOT CHANGE this after first install
   system.stateVersion = "26.05";

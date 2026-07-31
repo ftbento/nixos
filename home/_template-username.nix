@@ -17,40 +17,38 @@ in {
 
   # Home Manager configuration
   home-manager.users.${username} = {
-    imports = [ ../modules/home ];
+    imports = [ ./modules ];
 
     home = {
       username = username;
       homeDirectory = "/home/${username}";
-      stateVersion = "25.11";
+      stateVersion = "26.05";
       packages = with pkgs; [
 
       ];
     };
 
     # Enable shared modules and set per-user options
-    # myUser.fish = {
+    # home.fastfetch.enable = true;
+
+    # home.fish = {
     #   enable = true;
     #   shellAliases = {
-    #     # ...
+    #  
     #   };
     # };
-    #
-    # myUser.git = {
+
+    # home.git = {
     #   enable = true;
-    #   userName = "<git user name>";
-    #   userEmail = "<git user email>";
+    #   userName = "<username>";
+    #   userEmail = "<email>>";
     # };
-    #
-    # myUser.kitty = {
+
+    # home.kitty = {
     #   enable = true;
     #   settings = {
-    #     # ...
-    #   };
-    # };
     #
-    # myUser.fastfetch = {
-    #   enable = true;
+    #   };
     # };
   };
 }

@@ -1,11 +1,9 @@
 { config, pkgs, ... }: {
   imports = [
+    ./fastfetch
     ./fish.nix
     ./git.nix
-    ./hyprland.nix
     ./kitty.nix
-    ./fastfetch
-    ./waybar.nix
-    ./wofi.nix
+    ./yazi.nix
   ];
 }
