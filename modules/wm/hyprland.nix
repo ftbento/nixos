@@ -24,6 +24,8 @@
       wlogout
       btop
       fuzzel
+      cliphist
+      wl-clipboard
     ];
 
     security.pam.services.hyprlock = {};

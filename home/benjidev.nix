@@ -62,6 +62,8 @@ in {
         exec-once = [
           "hyprpaper"
           "hyprctl setcursor Bibata-Modern-Classic 24"
+          "wl-paste --type text --watch cliphist store"
+          "wl-paste --type image --watch cliphist store"
         ];
 
         input = {
@@ -96,6 +98,7 @@ in {
 
         bind = [
           "$mainMod, D, exec, fuzzel"
+          "$mainMod, V, exec, cliphist list | fuzzel --dmenu --with-nth 2 | cliphist decode | wl-copy"
           "$mainMod, Q, killactive"
           "$mainMod, Return, exec, $terminal"
           "$mainMod, Escape, exec, hyprlock"
