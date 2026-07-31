@@ -38,7 +38,7 @@
         system = "x86_64-linux";
         specialArgs = { inherit inputs users; };
         modules = [
-          ./hosts/nixos
+          ./hosts/radon
         ];
       };
     };
