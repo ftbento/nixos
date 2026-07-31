@@ -66,6 +66,7 @@ in {
 
         input = {
           kb_layout = "us";
+          kb_options = "caps:super";
           sensitivity = 0;
           follow_mouse = 0;
           touchpad = {
