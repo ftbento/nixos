@@ -26,5 +26,7 @@
       fuzzel
     ];
 
+    security.pam.services.hyprlock = {};
+
   };
 }

@@ -20,7 +20,7 @@
     programs.fish = {
       enable = true;
       generateCompletions = cfg.generateCompletions;
-      interactiveShellInit = ''
+      interactiveShellInit = lib.mkAfter ''
         set fish_greeting # Disable greeting
       '';
       plugins = [

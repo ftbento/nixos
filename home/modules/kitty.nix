@@ -11,7 +11,7 @@ in {
   };
 
   config = lib.mkIf cfg.enable {
-    programs.kitty = lib.mkForce {
+    programs.kitty = {
       enable = true;
       settings = cfg.settings;
     };

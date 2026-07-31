@@ -10,6 +10,7 @@
     ./nh.nix
     ./agenix.nix
     ./systemd.nix
+    ./stylix.nix
   ];
 }
 

@@ -6,27 +6,35 @@ My personal NixOS configurations with flake dependency management for managing m
 
 ```
 .
-├── hosts/
+├── flake.nix               # Flake entry point, inputs, nixosConfigurations
+├── hosts/                  # Per-host NixOS configurations
 │   ├── _template/          # Template for new hosts
-│   │   ├── configuration.nix
+│   │   ├── default.nix
 │   │   └── hardware-configuration.nix
-│   └── ...
+│   └── nixos-workstation/
 ├── modules/                # Shared NixOS modules
-│   ├── default.nix         # Global modules
-│   ├── core/               # Core system modules
+│   ├── default.nix         # Global module imports
+│   ├── core/               # Core system modules (incl. stylix.nix, home-manager.nix)
 │   ├── software/           # System software modules
 │   ├── tweaks/             # System tweaks
 │   ├── de/                 # Desktop environment modules
-│   └── home/               # Shared home-manager modules
-│       ├── default.nix     # Imports all shared home modules
-│       ├── fish.nix        # Fish shell (myUser.fish.*)
-│       ├── git.nix         # Git (myUser.git.*)
-│       ├── kitty.nix       # Kitty terminal (myUser.kitty.*)
-│       └── fastfetch/      # Fastfetch (myUser.fastfetch.*)
-└── home-manager/           # User configurations
-    ├── users.nix           # Export each user with host accessible names
-    ├── benjidev.nix        # Thin user profile (sets myUser.* options)
-    └── _template-username.nix  # User configuration template
+│   └── wm/                 # Window manager modules (hyprland.nix)
+├── home/                   # User home-manager configurations
+│   ├── users.nix           # User registry (users.<username> = ./<username>.nix)
+│   ├── benjidev.nix        # User profile
+│   ├── _template-username.nix  # User configuration template
+│   └── modules/            # Shared home-manager modules (myUser.* options)
+│       ├── default.nix
+│       ├── fish.nix        # Fish shell
+│       ├── git.nix         # Git
+│       ├── kitty.nix       # Kitty terminal
+│       ├── yazi.nix        # Yazi file manager
+│       ├── quickshell.nix  # Quickshell panel
+│       └── fastfetch/      # Fastfetch
+├── config/                 # Static dotfiles copied via xdg.configFile
+│   ├── hypr/               # hyprpaper.conf (hyprland/hyprlock are HM-managed)
+│   └── quickshell/
+└── secrets/                # Age-encrypted secrets (agenix)
 ```
 
 ## Adding a New Host
@@ -44,9 +52,9 @@ My personal NixOS configurations with flake dependency management for managing m
    ```
 
 3. **Edit host configuration:**
-   - Replace `<hostname>` with your actual hostname in `hosts/<hostname>/configuration.nix`
+   - Replace `<hostname>` with your actual hostname in `hosts/<hostname>/default.nix`
    - Update `system.stateVersion` to match your current NixOS version (check with `nixos-version`)
-   - Add host-specific packages in the `environment.systemPackages` list in `hosts/<hostname>/configuration.nix`
+   - Add host-specific packages in the `environment.systemPackages` list in `hosts/<hostname>/default.nix`
 
 ### For Fresh Install
 
@@ -63,10 +71,9 @@ My personal NixOS configurations with flake dependency management for managing m
    ```
 
 3. **Edit host configuration:**
-   - Copy /etc/nixos/configuration.nix as neccesary
-   - Replace `<hostname>` with the actual hostname in `hosts/<hostname>/configuration.nix`
+   - Replace `<hostname>` with the actual hostname in `hosts/<hostname>/default.nix`
    - Update `system.stateVersion`
-   - Add host-specific packages in the `environment.systemPackages` list in `hosts/<hostname>/configuration.nix`
+   - Add host-specific packages in the `environment.systemPackages` list in `hosts/<hostname>/default.nix`
 
 ### Next Steps
 
@@ -76,9 +83,9 @@ My personal NixOS configurations with flake dependency management for managing m
    nixosConfigurations = {
      <hostname> = nixpkgs.lib.nixosSystem {
        system = "x86_64-linux";
-       specialArgs = { inherit inputs; };
+       specialArgs = { inherit inputs users; };
        modules = [
-         ./hosts/<hostname>/configuration.nix
+         ./hosts/<hostname>
        ];
      };
    };
@@ -98,18 +105,18 @@ per-host imports in configuration.nix
 
 Users are managed through thin profile files that import shared modules and set per-user options:
 
-- System user creation and Home Manager settings are combined in `home-manager/<username>.nix`
-- Shared home-manager modules live in `modules/home/` and expose options under the `myUser.<module>` namespace
-- Users must be added to `home-manager/users.nix` to appear through `users.<username>`
+- System user creation and Home Manager settings are combined in `home/<username>.nix`
+- Shared home-manager modules live in `home/modules/` and expose options under the `myUser.<module>` namespace
+- Users must be added to `home/users.nix` to appear through `users.<username>`
 
 ### Adding a New User
 
 1. **Copy the user configuration template:**
    ```bash
-   cp home-manager/_template-username.nix home-manager/<username>.nix
+   cp home/_template-username.nix home/<username>.nix
    ```
 
-2. **Register the user in `home-manager/users.nix`:**
+2. **Register the user in `home/users.nix`:**
    ```nix
    {
      <username> = ./<username>.nix;
@@ -118,15 +125,24 @@ Users are managed through thin profile files that import shared modules and set 
 
 3. **Edit the user profile:**
    - Replace `<username>` and `<shell>` placeholders
-   - Set `myUser.*` options to enable/configure shared modules (fish, git, kitty, fastfetch)
+   - Set `myUser.*` options to enable/configure shared modules (fish, git, kitty, yazi, fastfetch)
    - Add user-specific packages in the `home.packages` list
 
 4. **Add the user to a host:**
    ```nix
-   # hosts/<hostname>/configuration.nix
+   # hosts/<hostname>/default.nix
    imports = [
      ./hardware-configuration.nix
      ../../modules/default.nix
      users.<username>
    ];
    ```
+
+## Theming (Stylix)
+
+Global theming is provided by [Stylix](https://github.com/nix-community/stylix) via `modules/core/stylix.nix`:
+
+- Colors come from a base16 scheme (`catppuccin-mocha` by default); switch schemes by changing `stylix.base16Scheme` or derive colors from a wallpaper with `stylix.image`.
+- Applies to supported targets automatically: kitty, Hyprland (window borders/hyprlock/hyprpaper), GTK/Qt, fuzzel, swaync, btop, and more.
+- The custom GRUB theme (`targets.grub.enable = false`) and per-monitor hyprlock wallpapers are preserved.
+- Hyprland and hyprlock configs are managed through Home Manager (`wayland.windowManager.hyprland` / `programs.hyprlock` in `home/benjidev.nix`) so Stylix can theme them.
