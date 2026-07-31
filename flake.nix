@@ -24,10 +24,15 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # spotatui = {
-    #   url = "github:LargeModGames/spotatui";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
+    silentSDDM = {
+      url = "github:uiriansan/SilentSDDM";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    spotatui = {
+      url = "github:LargeModGames/spotatui";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs: let

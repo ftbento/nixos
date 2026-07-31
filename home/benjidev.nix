@@ -9,6 +9,13 @@ in {
     shell = pkgs.fish;
   };
 
+  # sddm picture
+  systemd.tmpfiles.rules = [
+    "f+ /var/lib/AccountsService/users/${username} 0600 root root - [User]\\nIcon=/var/lib/AccountsService/icons/${username}\\n"
+    "L+ /var/lib/AccountsService/icons/${username} - - - - ${../config}/${username}.png"
+  ];
+
+  # secrets (agenix)
   age.identityPaths = [ "/home/${username}/.ssh/id_ed25519" ];
   age.secrets."github-ftbento" = {
     file = ../secrets/github-ftbento.age;
@@ -26,6 +33,7 @@ in {
       homeDirectory = "/home/${username}";
       stateVersion = "26.05";
       packages = with pkgs; [
+        comma
         vesktop
         unzip
         opencode
@@ -35,7 +43,7 @@ in {
         jq
         wlogout
         nerd-fonts.jetbrains-mono
-        # inputs.spotatui.packages.${pkgs.stdenv.hostPlatform.system}.default
+        inputs.spotatui.packages.${pkgs.stdenv.hostPlatform.system}.default
       ];
     };
 
@@ -70,7 +78,8 @@ in {
           kb_layout = "us";
           kb_options = "caps:super";
           sensitivity = 0;
-          follow_mouse = 0;
+          # 2: pointer (scroll) focus follows cursor, keyboard focus stays on last click
+          follow_mouse = 2;
           touchpad = {
             natural_scroll = true;
           };
@@ -84,7 +93,7 @@ in {
           gaps_in = 5;
           gaps_out = 10;
           border_size = 2;
-          layout = "dwindle";
+          layout = "scrolling";
         };
 
         decoration = {
@@ -94,6 +103,28 @@ in {
             size = 4;
             passes = 2;
           };
+        };
+
+        animations = {
+          enabled = true;
+
+          bezier = [
+            "easeOutCubic, 0.33, 1, 0.68, 1"
+            "easeInOutCubic, 0.65, 0.05, 0.36, 1"
+            "easeOutQuint, 0.23, 1, 0.32, 1"
+            "snappy, 0.15, 0, 0.1, 1"
+            "linear, 1, 1, 1, 1"
+          ];
+
+          animation = [
+            "windows, 1, 7, easeOutQuint"
+            "windowsOut, 1, 7, easeOutQuint, popin 80%"
+            "border, 1, 10, easeOutCubic"
+            "borderangle, 1, 8, easeInOutCubic"
+            "fade, 1, 7, easeOutCubic"
+            "workspaces, 1, 6, easeOutQuint"
+            "windowsMove, 1, 7, easeOutQuint"
+          ];
         };
 
         bind = [
@@ -153,6 +184,7 @@ in {
           grace = 5;
         };
 
+        # TODO: might be redundant with silent sddm?
         background = lib.mkForce [
           {
             monitor = "DP-1";
@@ -248,7 +280,33 @@ in {
 
     # Themed by Stylix
     services.swaync.enable = true;
-    programs.fuzzel.enable = true;
+    programs.fuzzel = {
+      enable = true;
+      settings = {
+        main = {
+          # Anchor Fuzzel to the bottom of the screen
+          anchor = "bottom";
+
+          # Optional gap between Fuzzel and the bottom edge/Waybar (in pixels)
+          y-margin = 20;
+
+          # Standard clean launcher settings
+          lines = 8;
+          width = 32;
+          horizontal-pad = 24;
+          vertical-pad = 18;
+          inner-pad = 12;
+          line-height = 26;
+          image-size-ratio = 0.5;
+          prompt = "❯ ";
+        };
+
+        border = {
+          width = 2;
+          radius = 16;
+        };
+      };
+    };
     programs.btop.enable = true;
 
     home.fastfetch.enable = true;
@@ -263,6 +321,8 @@ in {
         nhclean = "nh clean all --keep-since 4d --keep 3";
         nhlist = "nixos-rebuild list-generations";
         ff = "fastfetch";
+
+        spot = "spotatui";
         ".." = "cd ..";
       };
     };

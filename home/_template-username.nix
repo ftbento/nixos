@@ -15,6 +15,12 @@ in {
     owner = username;
   };
 
+  # SDDM/accountsservice avatar for this user — place image at ../config/<username>.png
+  # systemd.tmpfiles.rules = [
+  #   "f+ /var/lib/AccountsService/users/${username} 0600 root root - [User]\\nIcon=/var/lib/AccountsService/icons/${username}\\n"
+  #   "L+ /var/lib/AccountsService/icons/${username} - - - - ${../config}/${username}.png"
+  # ];
+
   # Home Manager configuration
   home-manager.users.${username} = {
     imports = [ ./modules ];
