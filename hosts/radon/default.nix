@@ -10,7 +10,7 @@
 
   nixpkgs.config.allowUnfree = true;
 
-  networking.hostName = "nixos-workstation";
+  networking.hostName = "radon";
 
   workstation = {
     hyprland.enable = true;

@@ -11,7 +11,6 @@ My personal NixOS configurations with flake dependency management for managing m
 │   ├── _template/          # Template for new hosts
 │   │   ├── default.nix
 │   │   └── hardware-configuration.nix
-│   └── nixos-workstation/
 ├── modules/                # Shared NixOS modules
 │   ├── default.nix         # Global module imports
 │   ├── core/               # Core system modules (incl. stylix.nix, home-manager.nix)

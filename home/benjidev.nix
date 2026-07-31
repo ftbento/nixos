@@ -67,7 +67,7 @@ in {
         input = {
           kb_layout = "us";
           sensitivity = 0;
-          follow_mouse = 1;
+          follow_mouse = 0;
           touchpad = {
             natural_scroll = true;
           };
@@ -97,14 +97,14 @@ in {
           "$mainMod, D, exec, fuzzel"
           "$mainMod, Q, killactive"
           "$mainMod, Return, exec, $terminal"
-          "$mainMod, L, exec, hyprlock"
+          "$mainMod, Escape, exec, hyprlock"
           ", Print, exec, hyprshot -m output --clipboard-only"
           "$mainMod, Print, exec, hyprshot -m region --clipboard-only"
           "$mainMod SHIFT, Print, exec, hyprshot -m window --clipboard-only"
-          "$mainMod, left, movefocus, l"
-          "$mainMod, right, movefocus, r"
-          "$mainMod, up, movefocus, u"
-          "$mainMod, down, movefocus, d"
+          "$mainMod, h, movefocus, l"
+          "$mainMod, l, movefocus, r"
+          "$mainMod, k, movefocus, u"
+          "$mainMod, j, movefocus, d"
           "$mainMod, 1, workspace, 1"
           "$mainMod, 2, workspace, 2"
           "$mainMod, 3, workspace, 3"
@@ -125,14 +125,14 @@ in {
           "$mainMod ALT, 8, movetoworkspace, 8"
           "$mainMod ALT, 9, movetoworkspace, 9"
           "$mainMod ALT, 0, movetoworkspace, 10"
-          "$mainMod SHIFT, left, movewindow, l"
-          "$mainMod SHIFT, right, movewindow, r"
-          "$mainMod SHIFT, up, movewindow, u"
-          "$mainMod SHIFT, down, movewindow, d"
-          "$mainMod CTRL, left, resizeactive, -30 0"
-          "$mainMod CTRL, right, resizeactive, 30 0"
-          "$mainMod CTRL, up, resizeactive, 0 -30"
-          "$mainMod CTRL, down, resizeactive, 0 30"
+          "$mainMod SHIFT, h, movewindow, l"
+          "$mainMod SHIFT, l, movewindow, r"
+          "$mainMod SHIFT, k, movewindow, u"
+          "$mainMod SHIFT, j, movewindow, d"
+          "$mainMod CTRL, h, resizeactive, -30 0"
+          "$mainMod CTRL, l, resizeactive, 30 0"
+          "$mainMod CTRL, k, resizeactive, 0 -30"
+          "$mainMod CTRL, j, resizeactive, 0 30"
         ];
       };
     };
@@ -254,6 +254,7 @@ in {
       shellAliases = {
         nhswitch = "nh os switch ~/nixos";
         nhboot = "nh os boot  ~/nixos";
+        nhtest = "nh os test ~/nixos";
         nhupdate = "nix flake update --flake ~/nixos && nh os switch  ~/nixos";
         nhclean = "nh clean all --keep-since 4d --keep 3";
         nhlist = "nixos-rebuild list-generations";
@@ -288,9 +289,6 @@ in {
     programs.cava = {
       enable = true;
     };
-
-    # Theme cava with a base16 gradient (the only cava theming mode Stylix has)
-    stylix.targets.cava.rainbow.enable = true;
 
     programs.ssh = {
       enable = true;

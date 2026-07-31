@@ -34,11 +34,11 @@
     users = import ./home/users.nix;
   in {
     nixosConfigurations = {
-      nixos-workstation = nixpkgs.lib.nixosSystem {
+      radon = nixpkgs.lib.nixosSystem {
         system = "x86_64-linux";
         specialArgs = { inherit inputs users; };
         modules = [
-          ./hosts/nixos-workstation
+          ./hosts/nixos
         ];
       };
     };
