@@ -4,6 +4,7 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     
+
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -31,6 +32,11 @@
 
     spotatui = {
       url = "github:LargeModGames/spotatui";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    ambxst = {
+      url = "github:Axenide/Ambxst";
       inputs.nixpkgs.follows = "nixpkgs";
     };
   };

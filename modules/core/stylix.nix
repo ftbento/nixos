@@ -25,6 +25,14 @@
       };
     };
 
+    # Match the Hyprland cursor (hyprctl setcursor Bibata-Modern-Classic 24)
+    # so GTK apps (and Waybar) can resolve hand2/arrow cursors.
+    cursor = {
+      name = "Bibata-Modern-Classic";
+      package = pkgs.bibata-cursors;
+      size = 24;
+    };
+
     targets = {
       # Keep the custom tsushima GRUB theme instead of the generated one
       grub.enable = false;

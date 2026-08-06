@@ -23,6 +23,48 @@
         "type": "github"
       }
     },
+    "ambxst": {
+      "inputs": {
+        "axctl": "axctl",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1784822600,
+        "narHash": "sha256-0OVh+Eln1i90fBJH/00p3OvWG7CCIRtcFMIKvQZlGkg=",
+        "owner": "Axenide",
+        "repo": "Ambxst",
+        "rev": "c5c943dd5136b559d6f9deda2031eb88256d4438",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Axenide",
+        "repo": "Ambxst",
+        "type": "github"
+      }
+    },
+    "axctl": {
+      "inputs": {
+        "nixpkgs": [
+          "ambxst",
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1779850544,
+        "narHash": "sha256-RSnr/BVWGw7+OXrRQ+PBrZZ/3gxlwmFlKW4zjlIRoDg=",
+        "owner": "Axenide",
+        "repo": "axctl",
+        "rev": "1e163c0193cf3b407b5d9bf65fbdb3ef8c8c1710",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Axenide",
+        "repo": "axctl",
+        "type": "github"
+      }
+    },
     "base16": {
       "inputs": {
         "fromYaml": "fromYaml"
@@ -287,6 +329,7 @@
     "root": {
       "inputs": {
         "agenix": "agenix",
+        "ambxst": "ambxst",
         "home-manager": "home-manager_2",
         "nixpkgs": "nixpkgs",
         "silentSDDM": "silentSDDM",

@@ -5,5 +5,6 @@
     ./tweaks
     ./wm/hyprland.nix
     ./de/gnome.nix
+    ./shell/ambxst.nix
   ];
 }

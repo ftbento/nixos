@@ -12,6 +12,8 @@
     ./systemd.nix
     ./stylix.nix
   ];
+
+  fonts.fontconfig.enable = true;
 }
 
 # garbage collection implemented through nh

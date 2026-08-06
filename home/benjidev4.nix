@@ -9,13 +9,10 @@ in {
     shell = pkgs.fish;
   };
 
-  workstation.ambxst = {
-    enable = true;
-    user = "benjidev";
-  };
-
-  # Hyprland uses hyprcursor; make sure the Bibata theme (set via stylix.cursor)
-  # is also picked up by Hyprland instead of the default Hyprland logo cursor.
+  # workstation.ambxst = {
+  #   enable = true;
+  #   user = "benjidev";
+  # };
 
   # sddm picture
   systemd.tmpfiles.rules = [
@@ -40,11 +37,6 @@ in {
       username = username;
       homeDirectory = "/home/${username}";
       stateVersion = "26.05";
-
-      # Hyprland uses hyprcursor; make sure the Bibata theme (set via stylix.cursor)
-      # is also picked up by Hyprland instead of the default Hyprland logo cursor.
-      pointerCursor.hyprcursor.enable = true;
-
       packages = with pkgs; [
         comma
         vesktop
@@ -61,126 +53,33 @@ in {
     };
 
     # Hyprland window manager (system-side programs.hyprland stays in modules/wm/hyprland.nix)
-    
+      
     wayland.windowManager.hyprland = {
       enable = true;
       package = null;
-      configType = "hyprlang"; # SWITCH TO LUA
-      # UWSM handles the systemd session integration
-      systemd.enable = false;
+      configType = "lua";
+      extraConfig = ''
+        hl.monitor({
+            output   = "DP-1",
+            mode     = "2560x1440@164.96",
+            position = "0x0",
+            scale    = 1,
+        })
 
-      settings = {
-        "$terminal" = "kitty";
-        "$mainMod" = "SUPER";
+        hl.monitor({
+            output   = "HDMI-A-1",
+            mode     = "1920x1080@60",
+            position = "2560x0",
+            scale    = 1,
+            transform = 3,
+        })
 
-        monitor = [
-          ", preferred, auto, 1"
-          "DP-1, 2560x1440@164.96, 0x0, 1"
-          "HDMI-A-1, 1920x1080@60, 2560x0, 1, transform, 3"
-        ];
-
-        exec-once = [
-          "hyprpaper"
-          "ambxst"
-          "hyprctl setcursor Bibata-Modern-Classic 24"
-          "wl-paste --type text --watch cliphist store"
-          "wl-paste --type image --watch cliphist store"
-        ];
-
-        input = {
-          kb_layout = "us";
-          kb_options = "caps:super";
-          sensitivity = -0.25;
-          # 2: pointer (scroll) focus follows cursor, keyboard focus stays on last click
-          follow_mouse = 2;
-        };
-
-        cursor = {
-          no_hardware_cursors = true;
-        };
-
-        general = {
-          gaps_in = 5;
-          gaps_out = 10;
-          border_size = 2;
-          layout = "scrolling";
-        };
-
-        decoration = {
-          rounding = 10;
-          blur = {
-            enabled = true;
-            size = 4;
-            passes = 2;
-          };
-        };
-
-        animations = {
-          enabled = true;
-
-          bezier = [
-            "easeOutCubic, 0.33, 1, 0.68, 1"
-            "easeInOutCubic, 0.65, 0.05, 0.36, 1"
-            "easeOutQuint, 0.23, 1, 0.32, 1"
-            "snappy, 0.15, 0, 0.1, 1"
-            "linear, 1, 1, 1, 1"
-          ];
-
-          animation = [
-            "windows, 1, 7, easeOutQuint"
-            "windowsOut, 1, 7, easeOutQuint, popin 80%"
-            "border, 1, 10, easeOutCubic"
-            "borderangle, 1, 8, easeInOutCubic"
-            "fade, 1, 7, easeOutCubic"
-            "workspaces, 1, 6, easeOutQuint"
-            "windowsMove, 1, 7, easeOutQuint"
-          ];
-        };
-
-        bind = [
-          "$mainMod, D, exec, fuzzel"
-          "$mainMod, V, exec, cliphist list | fuzzel --dmenu --with-nth 2 | cliphist decode | wl-copy"
-          "$mainMod, Q, killactive"
-          "$mainMod, Return, exec, $terminal"
-          "$mainMod, Escape, exec, hyprlock"
-          ", Print, exec, hyprshot -m output --clipboard-only"
-          "$mainMod, Print, exec, hyprshot -m region --clipboard-only"
-          "$mainMod SHIFT, Print, exec, hyprshot -m window --clipboard-only"
-          "$mainMod, h, layoutmsg, focus l"
-          "$mainMod, l, layoutmsg, focus r"
-          "$mainMod, k, layoutmsg, focus u"
-          "$mainMod, j, layoutmsg, focus d"
-          "$mainMod, 1, workspace, 1"
-          "$mainMod, 2, workspace, 2"
-          "$mainMod, 3, workspace, 3"
-          "$mainMod, 4, workspace, 4"
-          "$mainMod, 5, workspace, 5"
-          "$mainMod, 6, workspace, 6"
-          "$mainMod, 7, workspace, 7"
-          "$mainMod, 8, workspace, 8"
-          "$mainMod, 9, workspace, 9"
-          "$mainMod, 0, workspace, 10"
-          "$mainMod ALT, 1, movetoworkspace, 1"
-          "$mainMod ALT, 2, movetoworkspace, 2"
-          "$mainMod ALT, 3, movetoworkspace, 3"
-          "$mainMod ALT, 4, movetoworkspace, 4"
-          "$mainMod ALT, 5, movetoworkspace, 5"
-          "$mainMod ALT, 6, movetoworkspace, 6"
-          "$mainMod ALT, 7, movetoworkspace, 7"
-          "$mainMod ALT, 8, movetoworkspace, 8"
-          "$mainMod ALT, 9, movetoworkspace, 9"
-          "$mainMod ALT, 0, movetoworkspace, 10"
-          "$mainMod SHIFT, h, layoutmsg, swapcol l"
-          "$mainMod SHIFT, l, layoutmsg, swapcol r"
-          "$mainMod SHIFT, k, layoutmsg, consume"
-          "$mainMod SHIFT, j, layoutmsg, expel"
-          "$mainMod CTRL, h, layoutmsg, colresize -conf"
-          "$mainMod CTRL, l, layoutmsg, colresize +conf"
-          "$mainMod CTRL, k, layoutmsg, colresize -0.05"
-          "$mainMod CTRL, j, layoutmsg, colresize +0.05"
-        ];
-      };
+        require("hyprland-shared")
+      '';
     };
+
+    # Import shared hyprland.lua rules after
+    xdg.configFile."hypr/hyprland.lua".source = ../config/hypr/hyprland.lua;
 
     # Lock screen (colors from Stylix, per-monitor backgrounds kept manual)
     programs.hyprlock = {
@@ -347,7 +246,6 @@ in {
         background_blur = 5;
       };
     };
-
 
     home.yazi = {
       enable = true;

@@ -1,0 +1,86 @@
+@define-color background #1e1e2e;
+@define-color foreground #cdd6f4;
+@define-color mbg #313244;
+@define-color color1 #f38ba8;
+@define-color color2 #a6e3a1;
+@define-color color3 #f9e2af;
+@define-color color4 #89b4fa;
+@define-color color5 #cba6f7;
+@define-color color6 #94e2d5;
+@define-color color7 #b4befe;
+
+* {
+  font-size: 16px;
+  min-height: 0;
+  font-family: "JetBrains Mono Nerd Font";
+}
+
+window#waybar {
+  background-color: @background;
+  color: @foreground;
+  border-bottom: none;
+}
+
+#workspaces {
+  font-family: "JetBrains Mono Nerd Font";
+  font-size: 20px;
+  background-color: @mbg;
+  margin: 4px 0;
+  border-radius: 5px;
+}
+
+#workspaces button {
+  font-size: 18px;
+  background-color: transparent;
+  color: @color5;
+  transition: all 0.1s ease;
+}
+
+#workspaces button.focused {
+  font-size: 18px;
+  color: @color3;
+}
+
+#workspaces button.persistent {
+  color: @color1;
+  font-size: 12px;
+}
+
+#custom-launcher {
+  background-color: @mbg;
+  color: @color4;
+  margin: 4px 4.5px;
+  padding: 5px 12px;
+  font-size: 18px;
+  border-radius: 5px;
+}
+
+#custom-power {
+  color: @color1;
+  background-color: @mbg;
+  margin: 4px 4.5px 4px 4.5px;
+  padding: 5px 11px 5px 13px;
+  border-radius: 5px;
+}
+
+#clock {
+  background-color: @mbg;
+  color: @color7;
+  margin: 4px 9px;
+  padding: 5px 12px;
+  border-radius: 5px;
+}
+
+#network {
+  color: @color7;
+  background-color: @mbg;
+  margin: 4px 0 4px 4.5px;
+  padding: 5px 12px;
+  border-radius: 5px 0 0 5px;
+}
+
+tooltip {
+  background-color: @mbg;
+  color: @foreground;
+  border-radius: 5px;
+}

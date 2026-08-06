@@ -1,0 +1,58 @@
+{
+  "height": 35,
+  "layer": "top",
+  "position": "top",
+  "tray": {
+    "spacing": 10
+  },
+  "modules-center": [
+    "clock"
+  ],
+  "modules-left": [
+    "custom/launcher",
+    "hyprland/workspaces"
+  ],
+  "modules-right": [
+    "network",
+    "custom/power",
+    "tray"
+  ],
+  "hyprland/workspaces": {
+    "on-click": "activate",
+    "all-outputs": true,
+    "format": "{icon}",
+    "disable-scroll": true,
+    "active-only": false,
+    "format-icons": {
+      "default": "󰊠 ",
+      "persistent": "󰊠 ",
+      "focused": "󰮯 "
+    },
+    "persistent_workspaces": {
+      "1": [],
+      "2": [],
+      "3": [],
+      "4": [],
+      "5": []
+    }
+  },
+  "clock": {
+    "format": "{:%d %A %H:%M}",
+    "tooltip-format": "{:%Y-%m-%d | %H:%M}"
+  },
+  "network": {
+    "interval": 1,
+    "format-disconnected": "󰤮 ",
+    "format-wifi": "󰤨 ",
+    "format-ethernet": "󰌗 ",
+    "tooltip-format": "{ifname}\n{ipaddr}/{cidr}\n{essid} {signalStrength}%"
+  },
+  "custom/launcher": {
+    "on-click": "fuzzel",
+    "format": " "
+  },
+  "custom/power": {
+    "on-click": "wlogout",
+    "format": " "
+  }
+}
