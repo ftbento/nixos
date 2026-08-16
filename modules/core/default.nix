@@ -11,6 +11,7 @@
     ./agenix.nix
     ./systemd.nix
     ./stylix.nix
+    ./tailscale.nix
   ];
 
   fonts.fontconfig.enable = true;

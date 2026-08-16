@@ -1,7 +1,8 @@
 { config, pkgs, ... }: {
   imports = [
     ./flatpak.nix
-    ./steam.nix
+    ./fuzzel.nix
+    ./gaming.nix
     ./virtualization.nix
   ];
 }
