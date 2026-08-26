@@ -18,8 +18,7 @@ in {
       # Needed inside the Steam FHS env so MangoHud/GameMode work in games
       extraPackages = with pkgs; [ mangohud gamemode ];
       protontricks.enable = true;
-      # Steam Input on Wayland (uinput translation)
-      extest.enable = true;
+      # extest.enable = true;
     };
 
     # --- Feral GameMode (on-demand performance) ---
@@ -52,6 +51,7 @@ in {
     # --- MangoHud (perf overlay, themed by Stylix) ---
     home-manager.users.benjidev.programs.mangohud = {
       enable = true;
+      enableSessionWide = true;
       settings = {
         fps_limit = 0;
         vsync = 0;
@@ -63,9 +63,7 @@ in {
         gpu_temp = true;
         vram = true;
         ram = true;
-        font_size = 18;
         position = "top-left";
-        background_alpha = 0.5;
         toggle_hud = "Shift_R+F12";
       };
     };

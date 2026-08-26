@@ -9,10 +9,10 @@ in {
     shell = pkgs.fish;
   };
 
-  # workstation.ambxst = {
-  #   enable = true;
-  #   user = "benjidev";
-  # };
+  workstation.ambxst = {
+    enable = true;
+    user = "benjidev";
+  };
 
   # sddm picture
   systemd.tmpfiles.rules = [
@@ -37,6 +37,11 @@ in {
       username = username;
       homeDirectory = "/home/${username}";
       stateVersion = "26.05";
+
+      # Hyprland uses hyprcursor; make sure the Bibata theme (set via stylix.cursor)
+      # is also picked up by Hyprland instead of the default Hyprland logo cursor.
+      pointerCursor.hyprcursor.enable = true;
+
       packages = with pkgs; [
         comma
         vesktop
@@ -47,168 +52,31 @@ in {
         playerctl
         jq
         wlogout
+        obsidian
         nerd-fonts.jetbrains-mono
         inputs.spotatui.packages.${pkgs.stdenv.hostPlatform.system}.default
       ];
     };
 
-    # Hyprland window manager (system-side programs.hyprland stays in modules/wm/hyprland.nix)
-      
+    # Hyprland window manager (system-side programs.hyprland stays in modules/wm/hyprland.nix).
+    # This is the Lua variant; the whole config is provided via ../config/hypr/hyprland.lua
+    # (kept in sync with benjidev.nix's hyprlang `settings`).
     wayland.windowManager.hyprland = {
       enable = true;
       package = null;
       configType = "lua";
-      extraConfig = ''
-        hl.monitor({
-            output   = "DP-1",
-            mode     = "2560x1440@164.96",
-            position = "0x0",
-            scale    = 1,
-        })
-
-        hl.monitor({
-            output   = "HDMI-A-1",
-            mode     = "1920x1080@60",
-            position = "2560x0",
-            scale    = 1,
-            transform = 3,
-        })
-
-        require("hyprland-shared")
-      '';
+      # UWSM handles the systemd session integration
+      systemd.enable = false;
+      # Only used for the hyprlang variant; left empty so the module does not
+      # generate a conflicting hyprland.lua (the file below is the source of truth).
+      settings = { };
+      extraConfig = "";
     };
 
-    # Import shared hyprland.lua rules after
     xdg.configFile."hypr/hyprland.lua".source = ../config/hypr/hyprland.lua;
-
-    # Lock screen (colors from Stylix, per-monitor backgrounds kept manual)
-    programs.hyprlock = {
-      enable = true;
-      package = null;
-      settings = {
-        general = {
-          hide_cursor = true;
-          no_fade_in = false;
-          ignore_empty_input = true;
-          grace = 5;
-        };
-
-        # TODO: might be redundant with silent sddm?
-        background = lib.mkForce [
-          {
-            monitor = "DP-1";
-            path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
-            color = "rgba(21, 18, 27, 1.0)";
-            blur_passes = 2;
-            blur_size = 4;
-            noise = 0.01;
-            contrast = 0.8;
-            brightness = 0.7;
-            vibrancy = 0.2;
-            vibrancy_darkness = 0.1;
-          }
-          # second monitor wallpaper
-          {
-            monitor = "HDMI-A-1";
-            path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
-            color = "rgba(21, 18, 27, 1.0)";
-            blur_passes = 2;
-            blur_size = 4;
-            noise = 0.01;
-            contrast = 0.8;
-            brightness = 0.7;
-            vibrancy = 0.2;
-            vibrancy_darkness = 0.1;
-          }
-        ];
-
-        input-field = {
-          monitor = "DP-1";
-          size = "300, 50";
-          outline_thickness = 2;
-          dots_size = 0.2;
-          dots_spacing = 0.35;
-          dots_center = true;
-          fade_on_empty = true;
-          placeholder_text = "<i>Password...</i>";
-          hide_input = false;
-          fail_text = "...";
-          fail_timeout = 2000;
-          capslock_color = -1;
-          position = "0, 200";
-          halign = "center";
-          valign = "center";
-        };
-
-        label = [
-          {
-            monitor = "DP-1";
-            text = "cmd[update:1000] echo \"$(date '+%H:%M')\"";
-            color = "#ffffff";
-            font_size = 48;
-            font_family = "JetBrainsMono Nerd Font";
-            position = "0, -120";
-            halign = "center";
-            valign = "center";
-          }
-          # Time
-          {
-            monitor = "DP-1";
-            text = "cmd[update:1000] echo \"<b><big> $(date +\"%I:%M:%S %p\") </big></b>\"";
-            color = "rgba(255, 255, 255, 0.7)";
-            font_size = 94;
-            font_family = "JetBrainsMono Nerd Font";
-            position = "0, 0";
-            halign = "center";
-            valign = "center";
-          }
-          # User
-          {
-            monitor = "DP-1";
-            text = "   $USER";
-            color = "$color12";
-            font_size = 18;
-            font_family = "JetBrainsMono Nerd Font";
-
-            position = "0, 100";
-            halign = "center";
-            valign = "bottom";
-        }
-        ];
-      };
-    };
-
-    # Wallpaper daemon (static config; Stylix takes over only if stylix.image is set)
-    xdg.configFile."hypr/hyprpaper.conf".source = ../config/hypr/hyprpaper.conf;
 
     # Themed by Stylix
     services.swaync.enable = true;
-    programs.fuzzel = {
-      enable = true;
-      settings = {
-        main = {
-          # Anchor Fuzzel to the bottom of the screen
-          anchor = "bottom";
-
-          y-margin = 20;
-
-          # Standard clean launcher settings
-          lines = 8;
-          width = 32;
-          horizontal-pad = 24;
-          vertical-pad = 18;
-          inner-pad = 12;
-          line-height = 26;
-          image-size-ratio = 0.5;
-          prompt = "❯ ";
-        };
-
-        border = {
-          width = 2;
-          radius = 16;
-        };
-      };
-    };
     programs.btop.enable = true;
 
     home.fastfetch.enable = true;
@@ -259,7 +127,7 @@ in {
     programs.ssh = {
       enable = true;
       enableDefaultConfig = false;
-      
+
       settings = {
         "github.com" = {
           identityFile = config.age.secrets."github-ftbento".path;

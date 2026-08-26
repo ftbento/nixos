@@ -29,6 +29,10 @@ in {
     file = ../secrets/github-ftbento.age;
     owner = username;
   };
+  age.secrets."cop3223c" = {
+    file = ../secrets/cop3223c.age;
+    owner = username;
+  };
 
   # Home Manager configuration
   home-manager.users.${username} = {
@@ -55,14 +59,15 @@ in {
         playerctl
         jq
         wlogout
+        obsidian
         nerd-fonts.jetbrains-mono
         inputs.spotatui.packages.${pkgs.stdenv.hostPlatform.system}.default
       ];
     };
 
-    # Hyprland window manager (system-side programs.hyprland stays in modules/wm/hyprland.nix)
-    
-    wayland.windowManager.hyprland = {
+      # Hyprland window manager (system-side programs.hyprland stays in modules/wm/hyprland.nix)
+
+      wayland.windowManager.hyprland = {
       enable = true;
       package = null;
       configType = "hyprlang"; # SWITCH TO LUA
@@ -75,16 +80,30 @@ in {
 
         monitor = [
           ", preferred, auto, 1"
-          "DP-1, 2560x1440@164.96, 0x0, 1"
-          "HDMI-A-1, 1920x1080@60, 2560x0, 1, transform, 3"
+          "DP-5, 2560x1440@164.96, 0x0, 1"
+          "HDMI-A-5, 1920x1080@60, 320x-1080, 1, transform, 2"
+        ];
+
+        workspace = [
+          "1, monitor:DP-5"
+          "2, monitor:DP-5"
+          "3, monitor:DP-5"
+          "4, monitor:DP-5"
+          "5, monitor:DP-5"
+          "6, monitor:HDMI-A-5"
+          "7, monitor:HDMI-A-5"
+          "8, monitor:HDMI-A-5"
+          "9, monitor:HDMI-A-5"
+          "10, monitor:HDMI-A-5"
         ];
 
         exec-once = [
-          "hyprpaper"
           "ambxst"
           "hyprctl setcursor Bibata-Modern-Classic 24"
           "wl-paste --type text --watch cliphist store"
           "wl-paste --type image --watch cliphist store"
+          "xrandr --output DP-5 --primary"
+          "steam"
         ];
 
         input = {
@@ -104,6 +123,12 @@ in {
           gaps_out = 10;
           border_size = 2;
           layout = "scrolling";
+        };
+
+        # Every window opens as a full-size column; scroll to move between them
+        scrolling = {
+          column_width = 1.0;
+          fullscreen_on_one_column = true;
         };
 
         decoration = {
@@ -138,178 +163,54 @@ in {
         };
 
         bind = [
-          "$mainMod, D, exec, fuzzel"
-          "$mainMod, V, exec, cliphist list | fuzzel --dmenu --with-nth 2 | cliphist decode | wl-copy"
+          "$mainMod, D, exec, ambxst run launcher"
+          "$mainMod, V, exec, ambxst run clipboard"
           "$mainMod, Q, killactive"
           "$mainMod, Return, exec, $terminal"
-          "$mainMod, Escape, exec, hyprlock"
-          ", Print, exec, hyprshot -m output --clipboard-only"
-          "$mainMod, Print, exec, hyprshot -m region --clipboard-only"
+          "$mainMod, Escape, exec, ambxst lock"
+          ", Print, exec, hyprshot -m region --clipboard-only"
+          "$mainMod, Print, exec, hyprshot -m output --clipboard-only"
           "$mainMod SHIFT, Print, exec, hyprshot -m window --clipboard-only"
           "$mainMod, h, layoutmsg, focus l"
           "$mainMod, l, layoutmsg, focus r"
           "$mainMod, k, layoutmsg, focus u"
           "$mainMod, j, layoutmsg, focus d"
+          "$mainMod, 1, workspace, 6"
           "$mainMod, 1, workspace, 1"
+          "$mainMod, 2, workspace, 7"
           "$mainMod, 2, workspace, 2"
+          "$mainMod, 3, workspace, 8"
           "$mainMod, 3, workspace, 3"
+          "$mainMod, 4, workspace, 9"
           "$mainMod, 4, workspace, 4"
+          "$mainMod, 5, workspace, 10"
           "$mainMod, 5, workspace, 5"
-          "$mainMod, 6, workspace, 6"
-          "$mainMod, 7, workspace, 7"
-          "$mainMod, 8, workspace, 8"
-          "$mainMod, 9, workspace, 9"
-          "$mainMod, 0, workspace, 10"
-          "$mainMod ALT, 1, movetoworkspace, 1"
-          "$mainMod ALT, 2, movetoworkspace, 2"
-          "$mainMod ALT, 3, movetoworkspace, 3"
-          "$mainMod ALT, 4, movetoworkspace, 4"
-          "$mainMod ALT, 5, movetoworkspace, 5"
-          "$mainMod ALT, 6, movetoworkspace, 6"
-          "$mainMod ALT, 7, movetoworkspace, 7"
-          "$mainMod ALT, 8, movetoworkspace, 8"
-          "$mainMod ALT, 9, movetoworkspace, 9"
-          "$mainMod ALT, 0, movetoworkspace, 10"
+          "$mainMod SHIFT, 1, movetoworkspace, 1"
+          "$mainMod SHIFT, 2, movetoworkspace, 2"
+          "$mainMod SHIFT, 3, movetoworkspace, 3"
+          "$mainMod SHIFT, 4, movetoworkspace, 4"
+          "$mainMod SHIFT, 5, movetoworkspace, 5"
+          "$mainMod, mouse_up, layoutmsg, move +col"
+          "$mainMod, mouse_down, layoutmsg, move -col"
           "$mainMod SHIFT, h, layoutmsg, swapcol l"
           "$mainMod SHIFT, l, layoutmsg, swapcol r"
-          "$mainMod SHIFT, k, layoutmsg, consume"
-          "$mainMod SHIFT, j, layoutmsg, expel"
+          "$mainMod SHIFT, k, layoutmsg, expel"
+          "$mainMod SHIFT, j, layoutmsg, consume"
           "$mainMod CTRL, h, layoutmsg, colresize -conf"
           "$mainMod CTRL, l, layoutmsg, colresize +conf"
           "$mainMod CTRL, k, layoutmsg, colresize -0.05"
           "$mainMod CTRL, j, layoutmsg, colresize +0.05"
         ];
-      };
-    };
 
-    # Lock screen (colors from Stylix, per-monitor backgrounds kept manual)
-    programs.hyprlock = {
-      enable = true;
-      package = null;
-      settings = {
-        general = {
-          hide_cursor = true;
-          no_fade_in = false;
-          ignore_empty_input = true;
-          grace = 5;
-        };
-
-        # TODO: might be redundant with silent sddm?
-        background = lib.mkForce [
-          {
-            monitor = "DP-1";
-            path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
-            color = "rgba(21, 18, 27, 1.0)";
-            blur_passes = 2;
-            blur_size = 4;
-            noise = 0.01;
-            contrast = 0.8;
-            brightness = 0.7;
-            vibrancy = 0.2;
-            vibrancy_darkness = 0.1;
-          }
-          # second monitor wallpaper
-          {
-            monitor = "HDMI-A-1";
-            path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
-            color = "rgba(21, 18, 27, 1.0)";
-            blur_passes = 2;
-            blur_size = 4;
-            noise = 0.01;
-            contrast = 0.8;
-            brightness = 0.7;
-            vibrancy = 0.2;
-            vibrancy_darkness = 0.1;
-          }
-        ];
-
-        input-field = {
-          monitor = "DP-1";
-          size = "300, 50";
-          outline_thickness = 2;
-          dots_size = 0.2;
-          dots_spacing = 0.35;
-          dots_center = true;
-          fade_on_empty = true;
-          placeholder_text = "<i>Password...</i>";
-          hide_input = false;
-          fail_text = "...";
-          fail_timeout = 2000;
-          capslock_color = -1;
-          position = "0, 200";
-          halign = "center";
-          valign = "center";
-        };
-
-        label = [
-          {
-            monitor = "DP-1";
-            text = "cmd[update:1000] echo \"$(date '+%H:%M')\"";
-            color = "#ffffff";
-            font_size = 48;
-            font_family = "JetBrainsMono Nerd Font";
-            position = "0, -120";
-            halign = "center";
-            valign = "center";
-          }
-          # Time
-          {
-            monitor = "DP-1";
-            text = "cmd[update:1000] echo \"<b><big> $(date +\"%I:%M:%S %p\") </big></b>\"";
-            color = "rgba(255, 255, 255, 0.7)";
-            font_size = 94;
-            font_family = "JetBrainsMono Nerd Font";
-            position = "0, 0";
-            halign = "center";
-            valign = "center";
-          }
-          # User
-          {
-            monitor = "DP-1";
-            text = "   $USER";
-            color = "$color12";
-            font_size = 18;
-            font_family = "JetBrainsMono Nerd Font";
-
-            position = "0, 100";
-            halign = "center";
-            valign = "bottom";
-        }
+        bindm = [
+          "$mainMod, mouse:272, movewindow"
+          "$mainMod, mouse:273, resizewindow"
         ];
       };
     };
-
-    # Wallpaper daemon (static config; Stylix takes over only if stylix.image is set)
-    xdg.configFile."hypr/hyprpaper.conf".source = ../config/hypr/hyprpaper.conf;
 
     # Themed by Stylix
     services.swaync.enable = true;
-    programs.fuzzel = {
-      enable = true;
-      settings = {
-        main = {
-          # Anchor Fuzzel to the bottom of the screen
-          anchor = "bottom";
-
-          y-margin = 20;
-
-          # Standard clean launcher settings
-          lines = 8;
-          width = 32;
-          horizontal-pad = 24;
-          vertical-pad = 18;
-          inner-pad = 12;
-          line-height = 26;
-          image-size-ratio = 0.5;
-          prompt = "❯ ";
-        };
-
-        border = {
-          width = 2;
-          radius = 16;
-        };
-      };
-    };
     programs.btop.enable = true;
 
     home.fastfetch.enable = true;
@@ -327,6 +228,8 @@ in {
 
         spot = "spotatui";
         ".." = "cd ..";
+        argon = "ssh argon";
+        eustis = "ssh $(cat ${config.age.secrets."cop3223c".path})";
       };
     };
 
@@ -366,6 +269,12 @@ in {
         "github.com" = {
           identityFile = config.age.secrets."github-ftbento".path;
           identitiesOnly = true;
+        };
+
+        "argon" = {
+          HostName = "10.8.90.205";
+          Port = 205;
+          User = "benjidev";
         };
       };
     };

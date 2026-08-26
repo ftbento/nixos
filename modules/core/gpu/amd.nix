@@ -1,7 +1,16 @@
 { config, lib, pkgs, ... }: {
+  boot.kernelModules = [ "amdgpu" ];
+
   services.xserver.videoDrivers = [ "amdgpu" ];
-  hardware.graphics.enable = true;
-  hardware.graphics.extraPackages = with pkgs; [
-    rocmPackages.clr.icd
+
+  # RADV (Mesa's Vulkan driver for AMD) is enabled by default via hardware.graphics;
+  # this enables full OpenGL + Vulkan for both 64-bit and 32-bit (for games).
+  hardware.graphics = {
+    enable = true;
+    enable32Bit = true;
+  };
+
+  environment.systemPackages = with pkgs; [
+    vulkan-tools
   ];
 }

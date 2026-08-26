@@ -36,6 +36,8 @@
     targets = {
       # Keep the custom tsushima GRUB theme instead of the generated one
       grub.enable = false;
+      # NOTE: stylix (release-26.05) has no sddm target; SDDM login is themed
+      # separately in hosts/radon/default.nix.
     };
   };
 }

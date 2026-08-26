@@ -25,7 +25,7 @@
         # TODO: might be redundant with silent sddm?
         background = lib.mkForce [
           {
-            monitor = "DP-1";
+            monitor = "DP-5";
             path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
             color = "rgba(21, 18, 27, 1.0)";
             blur_passes = 2;
@@ -38,7 +38,7 @@
           }
           # second monitor wallpaper
           {
-            monitor = "HDMI-A-1";
+            monitor = "HDMI-A-5";
             path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
             color = "rgba(21, 18, 27, 1.0)";
             blur_passes = 2;
@@ -52,7 +52,7 @@
         ];
 
         input-field = {
-          monitor = "DP-1";
+          monitor = "DP-5";
           size = "300, 50";
           outline_thickness = 2;
           dots_size = 0.2;
@@ -71,7 +71,7 @@
 
         label = [
           {
-            monitor = "DP-1";
+            monitor = "DP-5";
             text = "cmd[update:1000] echo \"$(date '+%H:%M')\"";
             color = "#ffffff";
             font_size = 48;
@@ -82,7 +82,7 @@
           }
           # Time
           {
-            monitor = "DP-1";
+            monitor = "DP-5";
             text = "cmd[update:1000] echo \"<b><big> $(date +\"%I:%M:%S %p\") </big></b>\"";
             color = "rgba(255, 255, 255, 0.7)";
             font_size = 94;
@@ -93,7 +93,7 @@
           }
           # User
           {
-            monitor = "DP-1";
+            monitor = "DP-5";
             text = "   $USER";
             color = "$color12";
             font_size = 18;

@@ -14,19 +14,33 @@ hl.config({
     },
 })
 
-hl.bind(mainMod .. " + " .. "D", hl.dsp.exec_cmd("fuzzel"))
+hl.curve("easeOutCubic", { type = "bezier", points = { {0.33, 1}, {0.68, 1} } })
+hl.curve("easeInOutCubic", { type = "bezier", points = { {0.65, 0.05}, {0.36, 1} } })
+hl.curve("easeOutQuint", { type = "bezier", points = { {0.23, 1}, {0.32, 1} } })
+hl.curve("snappy", { type = "bezier", points = { {0.15, 0}, {0.1, 1} } })
+hl.curve("linear", { type = "bezier", points = { {1, 1}, {1, 1} } })
 
-hl.bind(mainMod .. " + " .. "V", hl.dsp.exec_cmd("cliphist list| fuzzel --dmenu --with-nth 2| cliphist decode| wl-copy"))
+hl.animation({ leaf = "windows", enabled = true, speed = 7, bezier = "easeOutQuint" })
+hl.animation({ leaf = "windowsOut", enabled = true, speed = 7, bezier = "easeOutQuint", style = "popin 80%" })
+hl.animation({ leaf = "border", enabled = true, speed = 10, bezier = "easeOutCubic" })
+hl.animation({ leaf = "borderangle", enabled = true, speed = 8, bezier = "easeInOutCubic" })
+hl.animation({ leaf = "fade", enabled = true, speed = 7, bezier = "easeOutCubic" })
+hl.animation({ leaf = "workspaces", enabled = true, speed = 6, bezier = "easeOutQuint" })
+hl.animation({ leaf = "windowsMove", enabled = true, speed = 7, bezier = "easeOutQuint" })
+
+hl.bind(mainMod .. " + " .. "D", hl.dsp.exec_cmd("ambxst run launcher"))
+
+hl.bind(mainMod .. " + " .. "V", hl.dsp.exec_cmd("ambxst run clipboard"))
 
 hl.bind(mainMod .. " + " .. "Q", hl.dsp.window.close())
 
 hl.bind(mainMod .. " + " .. "Return", hl.dsp.exec_cmd("kitty"))
 
-hl.bind(mainMod .. " + " .. "Escape", hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + " .. "Escape", hl.dsp.exec_cmd("ambxst lock"))
 
-hl.bind("Print", hl.dsp.exec_cmd("hyprshot -m output --clipboard-only"))
+hl.bind("Print", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only"))
 
-hl.bind(mainMod .. " + " .. "Print", hl.dsp.exec_cmd("hyprshot -m region --clipboard-only"))
+hl.bind(mainMod .. " + " .. "Print", hl.dsp.exec_cmd("hyprshot -m output --clipboard-only"))
 
 hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "Print", hl.dsp.exec_cmd("hyprshot -m window --clipboard-only"))
 
@@ -38,57 +52,47 @@ hl.bind(mainMod .. " + " .. "k", hl.dsp.layout("focus u"))
 
 hl.bind(mainMod .. " + " .. "j", hl.dsp.layout("focus d"))
 
+hl.bind(mainMod .. " + " .. 1, hl.dsp.focus({ workspace = 6 }))
+
 hl.bind(mainMod .. " + " .. 1, hl.dsp.focus({ workspace = 1 }))
+
+hl.bind(mainMod .. " + " .. 2, hl.dsp.focus({ workspace = 7 }))
 
 hl.bind(mainMod .. " + " .. 2, hl.dsp.focus({ workspace = 2 }))
 
+hl.bind(mainMod .. " + " .. 3, hl.dsp.focus({ workspace = 8 }))
+
 hl.bind(mainMod .. " + " .. 3, hl.dsp.focus({ workspace = 3 }))
+
+hl.bind(mainMod .. " + " .. 4, hl.dsp.focus({ workspace = 9 }))
 
 hl.bind(mainMod .. " + " .. 4, hl.dsp.focus({ workspace = 4 }))
 
+hl.bind(mainMod .. " + " .. 5, hl.dsp.focus({ workspace = 10 }))
+
 hl.bind(mainMod .. " + " .. 5, hl.dsp.focus({ workspace = 5 }))
 
-hl.bind(mainMod .. " + " .. 6, hl.dsp.focus({ workspace = 6 }))
+hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. 1, hl.dsp.window.move({ workspace = 1 }))
 
-hl.bind(mainMod .. " + " .. 7, hl.dsp.focus({ workspace = 7 }))
+hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. 2, hl.dsp.window.move({ workspace = 2 }))
 
-hl.bind(mainMod .. " + " .. 8, hl.dsp.focus({ workspace = 8 }))
+hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. 3, hl.dsp.window.move({ workspace = 3 }))
 
-hl.bind(mainMod .. " + " .. 9, hl.dsp.focus({ workspace = 9 }))
+hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. 4, hl.dsp.window.move({ workspace = 4 }))
 
-hl.bind(mainMod .. " + " .. 0, hl.dsp.focus({ workspace = 10 }))
+hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. 5, hl.dsp.window.move({ workspace = 5 }))
 
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 1, hl.dsp.window.move({ workspace = 1 }))
+hl.bind(mainMod .. " + " .. "mouse_up", hl.dsp.layout("move +col"))
 
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 2, hl.dsp.window.move({ workspace = 2 }))
-
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 3, hl.dsp.window.move({ workspace = 3 }))
-
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 4, hl.dsp.window.move({ workspace = 4 }))
-
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 5, hl.dsp.window.move({ workspace = 5 }))
-
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 6, hl.dsp.window.move({ workspace = 6 }))
-
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 7, hl.dsp.window.move({ workspace = 7 }))
-
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 8, hl.dsp.window.move({ workspace = 8 }))
-
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 9, hl.dsp.window.move({ workspace = 9 }))
-
-hl.bind(mainMod .. " + " .. "ALT" .. " + " .. 0, hl.dsp.window.move({ workspace = 10 }))
-
-hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "up", hl.dsp.window.move({ direction = "u" }))
-
-hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "down", hl.dsp.window.move({ direction = "d" }))
+hl.bind(mainMod .. " + " .. "mouse_down", hl.dsp.layout("move -col"))
 
 hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "h", hl.dsp.layout("swapcol l"))
 
 hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "l", hl.dsp.layout("swapcol r"))
 
-hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "k", hl.dsp.layout("consume"))
+hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "k", hl.dsp.layout("expel"))
 
-hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "j", hl.dsp.layout("expel"))
+hl.bind(mainMod .. " + " .. "SHIFT" .. " + " .. "j", hl.dsp.layout("consume"))
 
 hl.bind(mainMod .. " + " .. "CTRL" .. " + " .. "h", hl.dsp.layout("colresize -conf"))
 
@@ -97,6 +101,10 @@ hl.bind(mainMod .. " + " .. "CTRL" .. " + " .. "l", hl.dsp.layout("colresize +co
 hl.bind(mainMod .. " + " .. "CTRL" .. " + " .. "k", hl.dsp.layout("colresize -0.05"))
 
 hl.bind(mainMod .. " + " .. "CTRL" .. " + " .. "j", hl.dsp.layout("colresize +0.05"))
+
+hl.bind(mainMod .. " + " .. "mouse:272", hl.dsp.window.drag(), { mouse = true })
+
+hl.bind(mainMod .. " + " .. "mouse:273", hl.dsp.window.resize(), { mouse = true })
 
 hl.config({
     cursor = {
@@ -111,12 +119,11 @@ hl.config({
             passes = 2,
             size = 4,
         },
-        shadow = {
-            color = "rgba(1e1e2e99)",
-        },
         rounding = 10,
     },
 })
+
+
 
 
 
@@ -128,25 +135,6 @@ hl.config({
         gaps_in = 5,
         gaps_out = 10,
         layout = "scrolling",
-        col = {
-            active_border = "rgb(89b4fa)",
-            inactive_border = "rgb(6c7086)",
-        },
-    },
-})
-
-hl.config({
-    group = {
-        groupbar = {
-            col.active = "rgb(89b4fa)",
-            col.inactive = "rgb(6c7086)",
-            text_color = "rgb(cdd6f4)",
-        },
-        col = {
-            border_active = "rgb(89b4fa)",
-            border_inactive = "rgb(6c7086)",
-            border_locked_active = "rgb(94e2d5)",
-        },
     },
 })
 
@@ -155,13 +143,7 @@ hl.config({
         follow_mouse = 2,
         kb_layout = "us",
         kb_options = "caps:super",
-        sensitivity = 0,
-    },
-})
-
-hl.config({
-    misc = {
-        background_color = "rgb(1e1e2e)",
+        sensitivity = -0.250000,
     },
 })
 
@@ -172,10 +154,84 @@ hl.monitor({
     scale    = 1,
 })
 
+hl.monitor({
+    output   = "DP-5",
+    mode     = "2560x1440@164.96",
+    position = "0x0",
+    scale    = 1,
+})
+
+hl.monitor({
+    output   = "HDMI-A-5",
+    mode     = "1920x1080@60",
+    position = "320x-1080",
+    scale    = 1,
+    transform = 2,
+})
+
+hl.config({
+    scrolling = {
+        column_width = 1.000000,
+        fullscreen_on_one_column = true,
+    },
+})
+
+hl.workspace_rule({
+    workspace = 1,
+    monitor = "DP-5",
+})
+
+hl.workspace_rule({
+    workspace = 2,
+    monitor = "DP-5",
+})
+
+hl.workspace_rule({
+    workspace = 3,
+    monitor = "DP-5",
+})
+
+hl.workspace_rule({
+    workspace = 4,
+    monitor = "DP-5",
+})
+
+hl.workspace_rule({
+    workspace = 5,
+    monitor = "DP-5",
+})
+
+hl.workspace_rule({
+    workspace = 6,
+    monitor = "HDMI-A-5",
+})
+
+hl.workspace_rule({
+    workspace = 7,
+    monitor = "HDMI-A-5",
+})
+
+hl.workspace_rule({
+    workspace = 8,
+    monitor = "HDMI-A-5",
+})
+
+hl.workspace_rule({
+    workspace = 9,
+    monitor = "HDMI-A-5",
+})
+
+hl.workspace_rule({
+    workspace = 10,
+    monitor = "HDMI-A-5",
+})
+
 -- Autostart
 hl.on("hyprland.start", function()
-    hl.exec_cmd("hyprpaper")
+    hl.exec_cmd("ambxst")
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 24")
     hl.exec_cmd("wl-paste --type text --watch cliphist store")
     hl.exec_cmd("wl-paste --type image --watch cliphist store")
+    hl.exec_cmd("xrandr --output DP-1 --primary")
+    hl.exec_cmd("steam")
 end)

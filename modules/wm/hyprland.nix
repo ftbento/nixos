@@ -18,17 +18,13 @@
       hyprcursor
       hyprutils
       hyprwayland-scanner
-      hyprlock
-      hyprpaper
       hyprshot
       wlogout
       btop
-      fuzzel
       cliphist
       wl-clipboard
+      xorg.xrandr
     ];
-
-    security.pam.services.hyprlock = {};
 
   };
 }
