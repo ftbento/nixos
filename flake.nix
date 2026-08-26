@@ -47,13 +47,11 @@
     cop3223cShell = pkgs: agenixCli: pkgs.mkShell {
       packages = with pkgs; [ gcc gnumake gdb valgrind openssh ] ++ [ agenixCli ];
       shellHook = ''
-        if [ -f secrets/cop3223c.age ]; then
-          EUSTIS_TARGET=$(agenix -d secrets/cop3223c.age 2>/dev/null | tr -d '\n')
-          if [ -n "$EUSTIS_TARGET" ]; then
-            alias eustis="ssh $EUSTIS_TARGET"
-            echo "COP 3223C loaded — eustis alias ready"
-          else
-            echo "Warning: Could not decrypt cop3223c.age (missing private key in ~/.ssh/)"
+        if [ -d secrets ]; then
+          SSH_TARGET=$( (cd secrets && agenix -d cop3223c.age 2>/dev/null) | tr -d '\n')
+          if [ -n "$SSH_TARGET" ]; then
+            alias cop3223c="ssh $SSH_TARGET"
+            echo "COP 3223C loaded — cop3223c alias ready"
           fi
         fi
       '';

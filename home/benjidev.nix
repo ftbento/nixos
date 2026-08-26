@@ -229,7 +229,7 @@ in {
         spot = "spotatui";
         ".." = "cd ..";
         argon = "ssh argon";
-        eustis = "ssh $(cat ${config.age.secrets."cop3223c".path})";
+        cop3223c = "ssh $(cat ${config.age.secrets."cop3223c".path})";
       };
     };
 
