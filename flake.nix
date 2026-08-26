@@ -44,8 +44,8 @@
   outputs = { self, nixpkgs, home-manager, ... }@inputs: let
     users = import ./home/users.nix;
     pkgsFor = system: nixpkgs.legacyPackages.${system};
-    cop3223cShell = pkgs: pkgs.mkShell {
-      packages = with pkgs; [ gcc gnumake gdb valgrind openssh agenix ];
+    cop3223cShell = pkgs: agenixCli: pkgs.mkShell {
+      packages = with pkgs; [ gcc gnumake gdb valgrind openssh ] ++ [ agenixCli ];
       shellHook = ''
         if [ -f secrets/cop3223c.age ]; then
           EUSTIS_TARGET=$(agenix -d secrets/cop3223c.age 2>/dev/null | tr -d '\n')
@@ -69,6 +69,6 @@
       };
     };
 
-    devShells.x86_64-linux.default = cop3223cShell (pkgsFor "x86_64-linux");
+    devShells.x86_64-linux.default = cop3223cShell (pkgsFor "x86_64-linux") inputs.agenix.packages.x86_64-linux.default;
   };
 }
