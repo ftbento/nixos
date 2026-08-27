@@ -4,7 +4,6 @@
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     
-
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -45,7 +44,7 @@
     users = import ./home/users.nix;
     pkgsFor = system: nixpkgs.legacyPackages.${system};
     cop3223cShell = pkgs: agenixCli: pkgs.mkShell {
-      packages = with pkgs; [ gcc11 gnumake gdb valgrind openssh ] ++ [ agenixCli ];
+      packages = with pkgs; [ gcc13 gnumake gdb valgrind openssh ] ++ [ agenixCli ];
       shellHook = ''
         if [ -d secrets ]; then
           SSH_TARGET=$( (cd secrets && agenix -d cop3223c.age 2>/dev/null) | tr -d '\n')
