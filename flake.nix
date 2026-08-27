@@ -45,7 +45,7 @@
     users = import ./home/users.nix;
     pkgsFor = system: nixpkgs.legacyPackages.${system};
     cop3223cShell = pkgs: agenixCli: pkgs.mkShell {
-      packages = with pkgs; [ gcc gnumake gdb valgrind openssh ] ++ [ agenixCli ];
+      packages = with pkgs; [ gcc11 gnumake gdb valgrind openssh ] ++ [ agenixCli ];
       shellHook = ''
         if [ -d secrets ]; then
           SSH_TARGET=$( (cd secrets && agenix -d cop3223c.age 2>/dev/null) | tr -d '\n')
