@@ -63,6 +63,14 @@
           ./hosts/radon
         ];
       };
+
+      argon = nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = { inherit inputs users; };
+        modules = [
+          ./hosts/argon
+        ];
+      };
     };
 
     devShells.x86_64-linux.default = cop3223cShell (pkgsFor "x86_64-linux") inputs.agenix.packages.x86_64-linux.default;
