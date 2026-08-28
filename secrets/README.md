@@ -58,11 +58,9 @@ To create or edit an existing secret:
 agenix -e secrets/<name>.age
 ```
 
-This opens an editor where you can paste or modify the secret content. Upon saving, the file is re-encrypted with all public keys listed in `secrets.nix`.
-
 ## NixOS Configuration
 
-Declare secrets in your host's `configuration.nix`:
+Declare secrets in host's `configuration.nix`:
 
 ```nix
 age.secrets.<name> = {

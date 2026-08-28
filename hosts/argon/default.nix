@@ -34,9 +34,8 @@ in
     ../../modules/core/agenix.nix
   ];
 
-  # System Basics
   networking.hostName = "argon";
-  system.stateVersion = "24.05";
+  system.stateVersion = "26.05";
   time.timeZone = "America/New_York";
 
   # Networking & Static IP Configuration

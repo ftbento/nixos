@@ -6,7 +6,7 @@ My personal NixOS configurations with flake dependency management for managing m
 
 ```
 .
-├── flake.nix               # Flake entry point, inputs, nixosConfigurations
+├── flake.nix               # Flake entry point, inputs, nixosConfigurations, devShells
 ├── hosts/                  # Per-host NixOS configurations
 │   ├── _template/          # Template for new hosts
 │   │   ├── default.nix
@@ -24,15 +24,7 @@ My personal NixOS configurations with flake dependency management for managing m
 │   ├── _template-username.nix  # User configuration template
 │   └── modules/            # Shared home-manager modules (myUser.* options)
 │       ├── default.nix
-│       ├── fish.nix        # Fish shell
-│       ├── git.nix         # Git
-│       ├── kitty.nix       # Kitty terminal
-│       ├── yazi.nix        # Yazi file manager
-│       ├── quickshell.nix  # Quickshell panel
-│       └── fastfetch/      # Fastfetch
 ├── config/                 # Static dotfiles copied via xdg.configFile
-│   ├── hypr/               # hyprpaper.conf (hyprland/hyprlock are HM-managed)
-│   └── quickshell/
 └── secrets/                # Age-encrypted secrets (agenix)
 ```
 
