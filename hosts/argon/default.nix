@@ -38,6 +38,9 @@ in
   system.stateVersion = "26.05";
   time.timeZone = "America/New_York";
 
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
   # Networking & Static IP Configuration
   networking.useDHCP = false;
   networking.interfaces.enp10s0 = {
@@ -48,16 +51,26 @@ in
   };
   networking.defaultGateway = "10.8.90.1";
   networking.nameservers = [ "1.1.1.1" "8.8.8.8" ];
-
+programs.git = {
+    enable = true;
+#    userName = "ftbento";
+#    userEmail = "ftbento@users.noreply.github.com";
+config = {
+  user = {
+name = "ftbento";
+email = "ftbento@users.noreply.github.com";
+};
+};
+  };
   # Agenix Secrets Management
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
   age.secrets = {
     github-ftbento = {
-      file = ./secrets/github-ftbento.age;
+      file = ../../secrets/github-ftbento.age;
       mode = "0400";
     };
     couchdb-env = {
-      file = ./secrets/couchdb-env.age;
+      file = ../../secrets/couchdb-env.age;
       mode = "0400";
     };
   };
@@ -96,42 +109,42 @@ in
   };
 
   # Declarative OCI Containers
-  virtualisation.oci-containers.backend = "docker";
-  virtualisation.oci-containers.containers = {
-    obsidian-livesync = {
-      image = "couchdb:3.3.3";
-      ports = [ "5984:5984" ];
-      environmentFiles = [
-        config.age.secrets.couchdb-env.path
-      ];
-      volumes = [
-        "/var/lib/obsidian-livesync:/opt/couchdb/data"
-        "${couchdbConfig}:/opt/couchdb/etc/local.d/10-livesync.ini:ro"
-      ];
-    };
-  };
+#  virtualisation.oci-containers.backend = "docker";
+#  virtualisation.oci-containers.containers = {
+#    obsidian-livesync = {
+#      image = "couchdb:3.3.3";
+#      ports = [ "5984:5984" ];
+#      environmentFiles = [
+#        config.age.secrets.couchdb-env.path
+#      ];
+#      volumes = [
+#        "/var/lib/obsidian-livesync:/opt/couchdb/data"
+#        "${couchdbConfig}:/opt/couchdb/etc/local.d/10-livesync.ini:ro"
+#      ];
+#    };
+#  };
 
   # Automated Database Provisioning
-  systemd.services.init-couchdb-livesync = {
-    description = "Initialize CouchDB system DBs and databases";
-    after = [ "docker-obsidian-livesync.service" ];
-    wantedBy = [ "multi-user.target" ];
-    script = ''
-      source ${config.age.secrets.couchdb-env.path}
+#  systemd.services.init-couchdb-livesync = {
+#    description = "Initialize CouchDB system DBs and databases";
+#    after = [ "docker-obsidian-livesync.service" ];
+#    wantedBy = [ "multi-user.target" ];
+#    script = ''
+#      source ${config.age.secrets.couchdb-env.path}
+#
+#      until ${pkgs.curl}/bin/curl -s http://127.0.0.1:5984/_up | ${pkgs.gnugrep}/bin/grep -q '"status":"ok"'; do
+#        sleep 2
+#      done
 
-      until ${pkgs.curl}/bin/curl -s http://127.0.0.1:5984/_up | ${pkgs.gnugrep}/bin/grep -q '"status":"ok"'; do
-        sleep 2
-      done
-
-      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/_users
-      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/_replicator
-      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/_global_changes
-      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/thorium
-      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/mikayla
-    '';
-    serviceConfig = {
-      Type = "oneshot";
-      RemainAfterExit = true;
-    };
-  };
+#      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/_users
+#      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/_replicator
+#      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/_global_changes
+#      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/thorium
+#      ${pkgs.curl}/bin/curl -X PUT http://$COUCHDB_USER:$COUCHDB_PASSWORD@127.0.0.1:5984/mikayla
+#    '';
+#    serviceConfig = {
+#      Type = "oneshot";
+#      RemainAfterExit = true;
+#    };
+#  };
 }
