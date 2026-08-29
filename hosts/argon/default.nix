@@ -40,7 +40,12 @@ in
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-
+  programs.ssh.extraConfig = ''
+    Host github.com
+      IdentityFile ${config.age.secrets.github-ftbento.path}
+      IdentitiesOnly yes
+      StrictHostKeyChecking accept-new
+  '';
   # Networking & Static IP Configuration
   networking.useDHCP = false;
   networking.interfaces.enp10s0 = {
