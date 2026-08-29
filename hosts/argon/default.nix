@@ -116,6 +116,10 @@ in
 
   # --- Declarative OCI containers ---
   virtualisation.oci-containers.backend = "docker";
+  system.activationScripts.obsidian-couchdb.text = ''
+    mkdir -p /var/lib/obsidian-livesync
+    cp -f ${couchdbConfig} /var/lib/obsidian-livesync/10-livesync.ini
+  '';
   virtualisation.oci-containers.containers = {
     obsidian-livesync = {
       image = "couchdb:3.3.3";
@@ -125,7 +129,7 @@ in
       ];
       volumes = [
         "/var/lib/obsidian-livesync:/opt/couchdb/data"
-        "${couchdbConfig}:/opt/couchdb/etc/local.d/10-livesync.ini:ro"
+        "/var/lib/obsidian-livesync/10-livesync.ini:/opt/couchdb/etc/local.d/10-livesync.ini"
       ];
     };
   };
