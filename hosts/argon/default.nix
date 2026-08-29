@@ -22,10 +22,12 @@ let
 
     [httpd]
     enable_cors = true
+    WWW-Authenticate = Basic realm="couchdb"
 
     [cors]
     credentials = true
-    origins = https://argon.note-tawny.ts.net, http://localhost, capacitor://localhost, app://obsidian.md
+              
+    origins = https://argon.note-tawny.ts.net,http://localhost,capacitor://localhost,app://obsidian.md
     headers = accept, authorization, content-type, origin, referer
     methods = GET, PUT, POST, HEAD, DELETE
   '';
