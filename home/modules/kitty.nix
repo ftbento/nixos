@@ -1,19 +1,18 @@
-{ config, lib, ... }: let
-  cfg = config.home.kitty;
-in {
-  options.home.kitty = {
-    enable = lib.mkEnableOption "kitty terminal configuration";
-    settings = lib.mkOption {
-      type = lib.types.attrsOf lib.types.anything;
-      default = {};
-      description = "Kitty terminal settings";
-    };
-  };
+{ config, lib, ... }:
+{
+  options.home.kitty.enable = lib.mkEnableOption "kitty terminal configuration";
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf config.home.kitty.enable {
     programs.kitty = {
       enable = true;
-      settings = cfg.settings;
+      settings = {
+        confirm_os_window_close = 0;
+        dynamic_background_opacity = true;
+        enable_audio_bell = false;
+        mouse_hide_wait = "-1.0";
+        window_padding_width = 10;
+        background_blur = 5;
+      };
     };
   };
 }

@@ -1,8 +1,5 @@
-{ config, lib, pkgs, ... }: let
-  cfg = config.workstation.flatpak;
-in {
+{ config, lib, pkgs, ... }: {
   options.workstation.flatpak = {
-    enable = lib.mkEnableOption "Flatpak package management";
     onCalendar = lib.mkOption {
       type = lib.types.str;
       default = "weekly";
@@ -15,14 +12,16 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = {
     services.flatpak.enable = true;
     systemd.timers."flatpak-update" = {
       wantedBy = [ "timers.target" ];
       timerConfig = {
-        OnCalendar = cfg.onCalendar;
+        OnCalendar = config.workstation.flatpak.onCalendar;
         Persistent = true;
       };
+    };
+    systemd.services."flatpak-update" = {
       serviceConfig = {
         Type = "oneshot";
         ExecStart = "${lib.getExe pkgs.flatpak} update -y";

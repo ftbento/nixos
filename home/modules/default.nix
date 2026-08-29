@@ -1,6 +1,6 @@
 { config, pkgs, ... }: {
   imports = [
-    ./fastfetch
+    ./fastfetch.nix
     ./fish.nix
     ./git.nix
     ./kitty.nix

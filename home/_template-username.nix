@@ -1,4 +1,4 @@
-{ config, pkgs, inputs, ... }: let
+{ config, pkgs, lib, inputs, ... }: let
   username = "<username>";
 in {
   # System-level user creation
@@ -9,6 +9,7 @@ in {
     shell = pkgs.<shell>;
   };
 
+  # secrets (agenix) — declare any secrets this user needs (see secret files in ../secrets)
   age.identityPaths = [ "/home/${username}/.ssh/id_ed25519" ];
   age.secrets."SECRET_NAME" = {
     file = ../secrets/SECRET_NAME.age;
@@ -21,7 +22,11 @@ in {
   #   "L+ /var/lib/AccountsService/icons/${username} - - - - ${../config}/${username}.png"
   # ];
 
-  # Home Manager configuration
+  # Home Manager configuration.
+  #
+  # Concrete values for the shared modules below (fish aliases, git identity,
+  # kitty settings, yazi/fastfetch) are baked into home/modules/* — just enable
+  # them here, plus any per-user extras (e.g. secret-dependent aliases).
   home-manager.users.${username} = {
     imports = [ ./modules ];
 
@@ -34,27 +39,13 @@ in {
       ];
     };
 
-    # Enable shared modules and set per-user options
     # home.fastfetch.enable = true;
-
+    # home.yazi.enable = true;
+    # home.git.enable = true;
+    # home.kitty.enable = true;
     # home.fish = {
     #   enable = true;
-    #   shellAliases = {
-    #  
-    #   };
-    # };
-
-    # home.git = {
-    #   enable = true;
-    #   userName = "<username>";
-    #   userEmail = "<email>>";
-    # };
-
-    # home.kitty = {
-    #   enable = true;
-    #   settings = {
-    #
-    #   };
+    #   extraAliases = { };
     # };
   };
 }

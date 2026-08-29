@@ -1,29 +1,13 @@
-{ config, lib, ... }: let
-    cfg = config.home.git;
-  in 
-  {
-  options.home.git = {
-    enable = lib.mkEnableOption "git configuration";
-    userName = lib.mkOption {
-      type = lib.types.str;
-      default = "";
-      description = "Git user name";
-    };
-    userEmail = lib.mkOption {
-      type = lib.types.str;
-      default = "";
-      description = "Git user email";
-    };
-  };
+{ config, lib, ... }:
+{
+  options.home.git.enable = lib.mkEnableOption "git configuration";
 
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf config.home.git.enable {
     programs.git = {
       enable = true;
-      settings = {
-        user = {
-          name = cfg.userName;
-          email = cfg.userEmail;
-        };
+      settings.user = {
+        name = "ftbento";
+        email = "ftbento@users.noreply.github.com";
       };
     };
   };

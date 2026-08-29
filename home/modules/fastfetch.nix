@@ -1,46 +1,11 @@
-{ config, lib, ... }: let
-    cfg = config.home.fastfetch;
-  in 
-  {
-  options.home.fastfetch = {
-    enable = lib.mkEnableOption "fastfetch configuration";
-    modules = lib.mkOption {
-      type = lib.types.listOf lib.types.str;
-      default = [
-        "title"
-        "separator"
-        "os"
-        "host"
-        "kernel"
-        "uptime"
-        "packages"
-        "shell"
-        "display"
-        "de"
-        "wm"
-        "cpu"
-        "gpu"
-        "memory"
-        "swap"
-        "disk"
-        "localip"
-      "colors"
-      ];
-      description = "Fastfetch modules to display";
-    };
-  };
+{ config, lib, ... }:
+{
+  options.home.fastfetch.enable = lib.mkEnableOption "fastfetch configuration";
 
-  # users, host, uptime, kernel, term, shell, cpu, gpu, memory, disk, network, colors
-
-  config = lib.mkIf cfg.enable {
+  config = lib.mkIf config.home.fastfetch.enable {
     programs.fastfetch = {
       enable = true;
       settings = {
-        # logo = {
-        #   type = "data";
-        #   source = builtins.readFile ./ascii.txt;
-        #   padding = { right = 2; };
-        # };
         display = {
           separator = " ";
           color = {

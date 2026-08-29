@@ -1,11 +1,11 @@
-{ config, lib, ... }: let
-  cfg = config.home.yazi;
-in {
-  options.home.yazi = {
-    enable = lib.mkEnableOption "Yazi file manager";
-    settings = lib.mkOption {
-      type = lib.types.attrsOf lib.types.anything;
-      default = {
+{ config, lib, ... }:
+{
+  options.home.yazi.enable = lib.mkEnableOption "Yazi file manager";
+
+  config = lib.mkIf config.home.yazi.enable {
+    programs.yazi = {
+      enable = true;
+      settings = {
         yazi = {
           ratio = [ 1 4 3 ];
           sort_by = "natural";
@@ -17,14 +17,6 @@ in {
           show_symlink = true;
         };
       };
-      description = "Yazi configuration settings";
-    };
-  };
-
-  config = lib.mkIf cfg.enable {
-    programs.yazi = {
-      enable = true;
-      settings = cfg.settings;
     };
   };
 }

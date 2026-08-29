@@ -1,17 +1,12 @@
-{ config, lib, pkgs, ... }: {
-  options.workstation.hyprlock = {
-    enable = lib.mkEnableOption "hyprlock lock screen";
-  };
+{ lib, pkgs, ... }: {
+  environment.systemPackages = with pkgs; [
+    hyprlock
+  ];
 
-  config = lib.mkIf config.workstation.hyprlock.enable {
-    environment.systemPackages = with pkgs; [
-      hyprlock
-    ];
+  # Required for hyprlock to authenticate via PAM
+  security.pam.services.hyprlock = {};
 
-    # Required for hyprlock to authenticate via PAM
-    security.pam.services.hyprlock = {};
-
-    home-manager.users.benjidev.programs.hyprlock = {
+  home-manager.users.benjidev.programs.hyprlock = {
       enable = true;
       package = null;
       settings = {
@@ -106,5 +101,4 @@
         ];
       };
     };
-  };
 }

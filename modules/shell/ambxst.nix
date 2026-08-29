@@ -9,15 +9,13 @@ in
   ];
 
   options.workstation.ambxst = {
-    enable = lib.mkEnableOption "ambxst shell configuration";
-
     user = lib.mkOption {
       type = lib.types.str;
       description = "The primary user to assign hardware groups and packages to.";
     };
   };
 
-  config = lib.mkIf cfg.enable {
+  config = {
     # Pull in Ambxst's own NixOS module: it registers the shell package plus the
     # required fonts (Roboto, Phosphor Icons, ...) via fonts.packages and
     # enables upower/power-profiles-daemon/networkmanager by default.
