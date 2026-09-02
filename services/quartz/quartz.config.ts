@@ -71,6 +71,8 @@ const config: QuartzConfig = {
       Plugin.Description(),
       Plugin.Latex({ renderEngine: "katex" }),
     ],
+    // Publishes `publish: true` notes, the root `index.md`, `#notes`-tagged
+    // notes, and any note with a `class`; `#lecture` notes are always private.
     filters: [Plugin.ExplicitPublish()],
     emitters: [
       Plugin.AliasRedirects(),
