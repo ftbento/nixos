@@ -61,7 +61,16 @@ let
   buildScript = pkgs.writeShellScript "quartz-build" ''
     set -euo pipefail
 
-    export PATH=${lib.makeBinPath [ cfg.nodejs pkgs.git pkgs.openssh pkgs.rsync pkgs.coreutils pkgs.gnused ]}:$PATH
+    export PATH=${lib.makeBinPath [
+      cfg.nodejs
+      pkgs.git
+      pkgs.openssh
+      pkgs.rsync
+      pkgs.coreutils
+      pkgs.gnused
+      pkgs.bash
+    ]}:$PATH
+    export npm_config_script_shell=${q "${pkgs.bash}/bin/bash"}
     export GIT_SSH_COMMAND=${q gitSshCommand}
 
     SRC=${q srcDir}
@@ -121,7 +130,7 @@ let
     # --- 3. Install dependencies (only when the lockfile changed) -----------
     if ! cmp -s "$SRC/package-lock.json" "$STATE/.npmlock"; then
       echo "installing npm dependencies"
-      (cd "$SRC" && npm ci --no-audit --no-fund)
+      (cd "$SRC" && npm ci --no-audit --no-fund --no-update-notifier)
       cp "$SRC/package-lock.json" "$STATE/.npmlock"
     fi
 
@@ -252,7 +261,7 @@ in {
         wantedBy = [ "multi-user.target" ];
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
-        path = with pkgs; [ node git openssh rsync coreutils gnused ];
+        path = with pkgs; [ node git openssh rsync coreutils gnused bash ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = buildScript;
@@ -260,6 +269,11 @@ in {
           UMask = "0027";
           PrivateTmp = true;
           Nice = 10;
+          Environment = [
+            "HOME=${dataDir}"
+            "npm_config_cache=${dataDir}/.npm"
+            "npm_config_update_notifier=false"
+          ];
         };
       };
 
