@@ -142,16 +142,20 @@ let
 
     # --- 5. Publish ONLY the built site to the Pages repo ------------------
     if [ ! -d "$SITE/.git" ]; then
-      git clone "$siteRepo" "$SITE" 2>/dev/null || {
+      rm -rf "$SITE"
+      if git clone "$siteRepo" "$SITE"; then
+        echo "cloned $siteRepo"
+      else
+        echo "site repo $siteRepo not cloneable — initializing locally (push will confirm)"
         mkdir -p "$SITE"
         git -C "$SITE" init -b "$siteBranch"
         git -C "$SITE" remote add origin "$siteRepo"
-      }
+      fi
     fi
     git -C "$SITE" fetch origin "$siteBranch" 2>/dev/null || true
     git -C "$SITE" checkout -B "$siteBranch" "origin/$siteBranch" 2>/dev/null \
       || git -C "$SITE" switch --orphan "$siteBranch" 2>/dev/null \
-      || true
+      || { echo "ERROR: could not prepare $SITE for branch $siteBranch"; exit 1; }
 
     rsync -a --delete "$OUT/" "$SITE/"
     git -C "$SITE" add -A
@@ -196,7 +200,7 @@ in {
 
     siteRepo = lib.mkOption {
       type = lib.types.str;
-      default = "git@github.com:ftbento/notes.git";
+      default = "git@github.com:ftbento/quartz_vault.git";
       description = "Public repository served by GitHub Pages.";
     };
 
