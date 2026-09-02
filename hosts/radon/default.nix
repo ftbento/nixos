@@ -30,6 +30,27 @@
     options = [ "nofail" "ro" "noatime" ]; # read-only so NixOS never writes to Zorin's root
   };
 
+  workstation = {
+    hyprland.enable = true;
+    gaming.enable = true;
+    vpn.enable = true;
+  };
+
+  # SilentSDDM is disabled: it hard-depends on weston, which crashes on amdgpu
+  # (journal: weston_drm_format_add_modifier SIGABRT).
+  # The login screen is themed with qylock, which is a plain Qt6 SDDM theme that
+  # renders under the stock X11 greeter (no weston). We enable the X server purely
+  # to host the greeter (the actual user session is Hyprland/Wayland via SDDM).
+  services.xserver.enable = true;
+  services.displayManager.sddm.enable = true;
+
+  programs.qylock = {
+    enable = true;
+    theme = "nothing";
+    sddm.enable = true;        # install + activate the SDDM theme
+    quickshell.enable = false; # keep ambxst as the after-login lock screen
+  };
+
   # Host-specific system packages
   environment.systemPackages = with pkgs; [
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
