@@ -158,7 +158,7 @@
       vesktop
       wlogout
       obsidian
-      inputs.spotatui.packages.${pkgs.stdenv.hostPlatform.system}.default
+      # inputs.spotatui.packages.${pkgs.stdenv.hostPlatform.system}.default
       nerd-fonts.jetbrains-mono
     ];
   };

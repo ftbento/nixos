@@ -15,6 +15,10 @@ in {
     file = ../secrets/github-ftbento.age;
     owner = username;
   };
+  age.secrets."cop3223c" = {
+    file = ../secrets/cop3223c.age;
+    owner = username;
+  };
 
   # Home Manager configuration — shared user profile. Desktop-specific bits
   # (Hyprland, swaync, wallpaper, desktop apps) live in profiles/desktop.nix.

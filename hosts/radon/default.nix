@@ -30,12 +30,6 @@
     options = [ "nofail" "ro" "noatime" ]; # read-only so NixOS never writes to Zorin's root
   };
 
-  workstation = {
-    hyprland.enable = true;
-    gaming.enable = true;
-    vpn.enable = true;
-  };
-
   # SilentSDDM is disabled: it hard-depends on weston, which crashes on amdgpu
   # (journal: weston_drm_format_add_modifier SIGABRT).
   # The login screen is themed with qylock, which is a plain Qt6 SDDM theme that
