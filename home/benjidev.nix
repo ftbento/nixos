@@ -72,7 +72,7 @@ in {
         "argon" = {
           HostName = "10.8.90.205";
           Port = 205;
-          User = "benjidev";
+          User = "root";
         };
       };
     };
