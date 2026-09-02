@@ -130,7 +130,7 @@ let
     # --- 3. Install dependencies (only when the lockfile changed) -----------
     if ! cmp -s "$SRC/package-lock.json" "$STATE/.npmlock"; then
       echo "installing npm dependencies"
-      (cd "$SRC" && npm ci --no-audit --no-fund --no-update-notifier)
+      (cd "$SRC" && npm ci --no-audit --no-fund --no-update-notifier --ignore-scripts)
       cp "$SRC/package-lock.json" "$STATE/.npmlock"
     fi
 
