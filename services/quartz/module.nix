@@ -37,9 +37,9 @@ let
 
   gitSshCommand =
     if cfg.gitSshKey == null then
-      "ssh -o StrictHostKeyChecking=accept-new"
+      "${pkgs.openssh}/bin/ssh -o StrictHostKeyChecking=accept-new"
     else
-      "ssh -i ${cfg.gitSshKey} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new";
+      "${pkgs.openssh}/bin/ssh -i ${cfg.gitSshKey} -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new";
 
   # Patched Quartz checkout: pristine source + our config + filter overlay.
   quartzSrc = pkgs.stdenv.mkDerivation {
@@ -253,7 +253,7 @@ in {
         wantedBy = [ "multi-user.target" ];
         after = [ "network-online.target" ];
         wants = [ "network-online.target" ];
-        path = with pkgs; [ node git rsync coreutils gnused ];
+        path = with pkgs; [ node git openssh rsync coreutils gnused ];
         serviceConfig = {
           Type = "oneshot";
           ExecStart = buildScript;
