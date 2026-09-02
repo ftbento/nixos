@@ -38,6 +38,11 @@
       url = "github:Axenide/Ambxst";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    quartz = {
+      url = "github:jackyzha0/quartz/v4";
+      flake = false;
+    };
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs: let

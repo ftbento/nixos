@@ -36,7 +36,15 @@ in
   imports = [
     ./hardware-configuration.nix
     ../../profiles/core.nix
+    ../../services/quartz/module.nix
   ];
+
+  # --- Quartz: publish selective notes to GitHub Pages ---
+  services.quartz = {
+    enable = true;
+    vaultRepo = "git@github.com:ftbento/vault.git";
+    siteRepo = "git@github.com:ftbento/quartz_vault.git";
+  };
 
   networking.hostName = "argon";
   system.stateVersion = "26.05";
