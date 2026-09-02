@@ -342,23 +342,6 @@
         "type": "github"
       }
     },
-    "quartz": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1776677850,
-        "narHash": "sha256-eYSMjvo4pduIYQwY9lPBj19yzPJmE0j2xh7x/IHBm94=",
-        "owner": "jackyzha0",
-        "repo": "quartz",
-        "rev": "d25a6eabf96751ffca56f8a8139272def7a65041",
-        "type": "github"
-      },
-      "original": {
-        "owner": "jackyzha0",
-        "ref": "v4",
-        "repo": "quartz",
-        "type": "github"
-      }
-    },
     "qylock": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -387,7 +370,6 @@
         "ambxst": "ambxst",
         "home-manager": "home-manager_2",
         "nixpkgs": "nixpkgs",
-        "quartz": "quartz",
         "qylock": "qylock",
         "stylix": "stylix",
         "zen-browser": "zen-browser"

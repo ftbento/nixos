@@ -36,28 +36,13 @@ in
   imports = [
     ./hardware-configuration.nix
     ../../profiles/core.nix
-    ../../services/quartz/module.nix
   ];
-
-  # --- Quartz: publish selective notes to GitHub Pages ---
-  services.quartz = {
-    enable = true;
-    vaultRepo = "git@github.com:ftbento/vault.git";
-    siteRepo = "git@github.com:ftbento/quartz_vault.git";
-  };
 
   networking.hostName = "argon";
   system.stateVersion = "26.05";
 
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
-
-  programs.ssh.extraConfig = ''
-    Host github.com
-      IdentityFile ${config.age.secrets.github-ftbento.path}
-      IdentitiesOnly yes
-      StrictHostKeyChecking accept-new
-  '';
 
   # Networking & Static IP Configuration
   networking.useDHCP = false;
@@ -83,10 +68,6 @@ in
   # Agenix Secrets Management
   age.identityPaths = [ "/etc/ssh/ssh_host_ed25519_key" ];
   age.secrets = {
-    github-ftbento = {
-      file = ../../secrets/github-ftbento.age;
-      mode = "0400";
-    };
     couchdb-env = {
       file = ../../secrets/couchdb-env.age;
       mode = "0400";
