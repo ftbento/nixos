@@ -61,6 +61,7 @@ let
   buildScript = pkgs.writeShellScript "quartz-build" ''
     set -euo pipefail
 
+    export PATH=${lib.makeBinPath [ cfg.nodejs pkgs.git pkgs.openssh pkgs.rsync pkgs.coreutils pkgs.gnused ]}:$PATH
     export GIT_SSH_COMMAND=${q gitSshCommand}
 
     SRC=${q srcDir}
@@ -239,13 +240,11 @@ in {
       }];
 
       # Seed / apply the patched Quartz source on each NixOS rebuild.
+      # Uses only coreutils (cp/chmod) since activation scripts have no rsync.
       system.activationScripts.quartz = lib.mkAfter ''
-        mkdir -p ${dataDir}
-        rsync -a \
-          --delete \
-          --exclude='node_modules' \
-          ${quartzSrc}/ ${q srcDir}/
-        chmod -R u+w ${q srcDir}
+        mkdir -p ${dataDir} ${q srcDir}
+        cp -rL --no-preserve=mode ${quartzSrc}/. ${q srcDir}/
+        chmod -R u+w ${q srcDir}/
       '';
 
       systemd.services.quartz-build = {
