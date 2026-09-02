@@ -34,7 +34,7 @@ export const ExplicitPublish: QuartzFilterPlugin<Partial<Options>> = (userOpts) 
     name: "ExplicitPublish",
     shouldPublish(_ctx, [_tree, vfile]) {
       const fm = vfile.data?.frontmatter as Record<string, unknown> | undefined
-      return isExplicitlyPublished(fm) || hasNonEmptyClass(fm, opts.classKey)
+      return vfile.data?.slug === "index" || isExplicitlyPublished(fm) || hasNonEmptyClass(fm, opts.classKey)
     },
   }
 }

@@ -115,18 +115,17 @@ let
     git -C "$VAULT" clean -fdq
 
     # --- 2. Stage a curated build input ------------------------------------
-    # Allowlist: directories, ALL markdown (the filter decides what publishes),
-    # and the attachments folder (so embedded media resolves). Everything else —
-    # personal PDFs, Excalidraw, .obsidian, scratch files — never enters the build.
+    # Allowlist: directories and markdown only (the filter decides what
+    # publishes). Attachments are deliberately NOT staged — Quartz's Assets
+    # emitter copies every non-md file verbatim with no filtering, so leaving
+    # them out is what keeps private media private. Everything else — personal
+    # PDFs, Excalidraw, .obsidian, scratch files — never enters the build.
     rm -rf "$STAGE"
-    mkdir -p "$STAGE/5 ~ Resources/attachments"
+    mkdir -p "$STAGE"
     rsync -a \
       --exclude='.git/' \
       --include='*/' --include='*.md' --exclude='*' \
       "$VAULT/" "$STAGE/"
-    if [ -d "$VAULT/5 ~ Resources/attachments" ]; then
-      rsync -a "$VAULT/5 ~ Resources/attachments/" "$STAGE/5 ~ Resources/attachments/"
-    fi
 
     # --- 3. Install dependencies (only when the lockfile changed) -----------
     if ! cmp -s "$SRC/package-lock.json" "$STATE/.npmlock"; then
@@ -142,21 +141,13 @@ let
     (cd "$SRC" && "$NODE" quartz/bootstrap-cli.mjs build -d "$STAGE" -o "$OUT")
 
     # --- 5. Publish ONLY the built site to the Pages repo ------------------
-    if [ ! -d "$SITE/.git" ]; then
-      rm -rf "$SITE"
-      if git clone "$siteRepo" "$SITE"; then
-        echo "cloned $siteRepo"
-      else
-        echo "site repo $siteRepo not cloneable — initializing locally (push will confirm)"
-        mkdir -p "$SITE"
-        git -C "$SITE" init -b "$siteBranch"
-        git -C "$SITE" remote add origin "$siteRepo"
-      fi
-    fi
-    git -C "$SITE" fetch origin "$siteBranch" 2>/dev/null || true
-    git -C "$SITE" checkout -B "$siteBranch" "origin/$siteBranch" 2>/dev/null \
-      || git -C "$SITE" switch --orphan "$siteBranch" 2>/dev/null \
-      || { echo "ERROR: could not prepare $SITE for branch $siteBranch"; exit 1; }
+    # The site is a generated artifact, so gh-pages is rewritten as a single
+    # orphan commit + force-push on every meaningful change. This keeps the
+    # public history depth-1 and guarantees stale (possibly private) files
+    # never linger in git history.
+    rm -rf "$SITE"
+    git init -b "$siteBranch" "$SITE"
+    git -C "$SITE" remote add origin "$siteRepo"
 
     rsync -a --delete --exclude='.git/' "$OUT/" "$SITE/"
     git -C "$SITE" add -A
@@ -165,8 +156,8 @@ let
         -c user.name="quartz-builder" \
         -c user.email="quartz@argon.invalid" \
         commit -m "quartz rebuild $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+      git -C "$SITE" push --force --set-upstream origin "$siteBranch"
     fi
-    git -C "$SITE" push --set-upstream origin "$siteBranch"
 
     echo "$newHead" > "$STATE/.last-commit"
     echo "done — site pushed to $siteRepo ($siteBranch)"
