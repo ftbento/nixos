@@ -67,6 +67,7 @@ let
       pkgs.openssh
       pkgs.rsync
       pkgs.coreutils
+      pkgs.diffutils
       pkgs.gnused
       pkgs.bash
     ]}:$PATH
@@ -157,7 +158,7 @@ let
       || git -C "$SITE" switch --orphan "$siteBranch" 2>/dev/null \
       || { echo "ERROR: could not prepare $SITE for branch $siteBranch"; exit 1; }
 
-    rsync -a --delete "$OUT/" "$SITE/"
+    rsync -a --delete --exclude='.git/' "$OUT/" "$SITE/"
     git -C "$SITE" add -A
     if ! git -C "$SITE" diff --cached --quiet; then
       git -C "$SITE" \
