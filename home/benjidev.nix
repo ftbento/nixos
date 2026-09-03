@@ -46,6 +46,10 @@ in {
 
     programs.btop.enable = true;
 
+    # Silence xdg-desktop-portal 1.17 config warning (default backend set at
+    # the NixOS system level in modules/software/rustdesk.nix).
+    xdg.portal.config.common.default = "*";
+
     # Shared user modules with config baked in. Only enable + per-user overrides.
     home.fastfetch.enable = true;
     home.yazi.enable = true;

@@ -15,6 +15,6 @@
     btop
     cliphist
     wl-clipboard
-    xorg.xrandr
+    xrandr
   ];
 }

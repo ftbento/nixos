@@ -57,17 +57,21 @@
   in {
     nixosConfigurations = {
       radon = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs users; };
         modules = [
+          {
+            nixpkgs.hostPlatform = "x86_64-linux";
+          }
           ./hosts/radon
         ];
       };
 
       argon = nixpkgs.lib.nixosSystem {
-        system = "x86_64-linux";
         specialArgs = { inherit inputs users; };
         modules = [
+          {
+            nixpkgs.hostPlatform = "x86_64-linux";
+          }
           ./hosts/argon
         ];
       };

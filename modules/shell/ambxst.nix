@@ -16,10 +16,16 @@ in
   };
 
   config = {
-    # Pull in Ambxst's own NixOS module: it registers the shell package plus the
+    # Push Ambxst's own NixOS module: it registers the shell package plus the
     # required fonts (Roboto, Phosphor Icons, ...) via fonts.packages and
     # enables upower/power-profiles-daemon/networkmanager by default.
-    programs.ambxst.enable = lib.mkForce true;
+    programs.ambxst = {
+      enable = lib.mkForce true;
+      # Override the package explicitly so Ambxst's upstream `mkDefault`
+      # (`self.packages.${pkgs.system}.default`) isn't evaluated — that uses the
+      # deprecated `pkgs.system` alias and triggers a deprecation warning.
+      package = inputs.ambxst.packages.${pkgs.stdenv.hostPlatform.system}.default;
+    };
 
     fonts.fontconfig.enable = true;
 
