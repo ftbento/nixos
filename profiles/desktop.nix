@@ -16,6 +16,7 @@
     ../modules/software/gaming.nix
     ../modules/software/fuzzel.nix
     ../modules/software/flatpak.nix
+    ../modules/software/rustdesk.nix
     inputs.qylock.nixosModules.default
     users.benjidev
   ];
