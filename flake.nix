@@ -47,7 +47,7 @@
       packages = with pkgs; [ gcc13 gnumake gdb valgrind openssh ] ++ [ agenixCli ];
       shellHook = ''
         if [ -d ~/nixos/secrets ]; then
-          COP3223C=$( (cd ~/nixos/secrets && agenix -d cop3223c.age 2>/dev/null) | tr -d '\n')
+          export COP3223C=$( (cd ~/nixos/secrets && agenix -d cop3223c.age 2>/dev/null) | tr -d '\n')
           if [ -n "$COP3223C" ]; then
             echo "COP 3223C loaded — $COP3223C ready"
           fi
