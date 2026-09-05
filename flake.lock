@@ -228,7 +228,7 @@
     },
     "flake-utils_2": {
       "inputs": {
-        "systems": "systems_3"
+        "systems": "systems_4"
       },
       "locked": {
         "lastModified": 1731533236,
@@ -389,30 +389,9 @@
         "home-manager": "home-manager_2",
         "nixpkgs": "nixpkgs",
         "qylock": "qylock",
-        "spotatui": "spotatui",
         "stylix": "stylix",
+        "ytm-player": "ytm-player",
         "zen-browser": "zen-browser"
-      }
-    },
-    "spotatui": {
-      "inputs": {
-        "flake-utils": "flake-utils_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
-      },
-      "locked": {
-        "lastModified": 1788549246,
-        "narHash": "sha256-UN/d57Ez0ss7uE7yeOJ7kxNvzjlFqWPTHq/cbN+RRms=",
-        "owner": "LargeModGames",
-        "repo": "spotatui",
-        "rev": "4c01587d3ab174c4896f7e0fa9ec0594bedab0bb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "LargeModGames",
-        "repo": "spotatui",
-        "type": "github"
       }
     },
     "stylix": {
@@ -428,7 +407,7 @@
           "nixpkgs"
         ],
         "nur": "nur",
-        "systems": "systems_4",
+        "systems": "systems_3",
         "tinted-kitty": "tinted-kitty",
         "tinted-schemes": "tinted-schemes",
         "tinted-tmux": "tinted-tmux",
@@ -570,6 +549,27 @@
       "original": {
         "owner": "tinted-theming",
         "repo": "base16-zed",
+        "type": "github"
+      }
+    },
+    "ytm-player": {
+      "inputs": {
+        "flake-utils": "flake-utils_2",
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1788622624,
+        "narHash": "sha256-QeYOuSL00kdNt/u2QsjjFTbPZ+AMxQcONVD/YeNgPbg=",
+        "owner": "peternaame-boop",
+        "repo": "ytm-player",
+        "rev": "a0e62b3c6db55ebc8d608f38b4963cfcc0d08470",
+        "type": "github"
+      },
+      "original": {
+        "owner": "peternaame-boop",
+        "repo": "ytm-player",
         "type": "github"
       }
     },

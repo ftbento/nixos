@@ -29,8 +29,8 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    spotatui = {
-      url = "github:LargeModGames/spotatui";
+    ytm-player = {
+      url = "github:peternaame-boop/ytm-player";
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
