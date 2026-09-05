@@ -335,6 +335,22 @@
         "type": "github"
       }
     },
+    "nixpkgs_2": {
+      "locked": {
+        "lastModified": 1788372231,
+        "narHash": "sha256-7aqErvrAEz/5OcPA5p3M+tVOqeYc4oJXkNIPXfCqxAw=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "9387b3fcc0c23c86661636da63faabad4235a0a6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixpkgs-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
     "nur": {
       "inputs": {
         "flake-parts": [
@@ -369,11 +385,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1786536622,
-        "narHash": "sha256-ypS2jlAzcZU1Sf76XNRdKoZr2oeaEV/jhRBSoxonxtc=",
+        "lastModified": 1788579251,
+        "narHash": "sha256-Cb4MtTxXQHSzjajhO0/MjuzHwQkaCYFeEYoCI3dXBOw=",
         "owner": "Darkkal44",
         "repo": "qylock",
-        "rev": "f86d3f669cf988f50662e60b9128ca726d269a12",
+        "rev": "a5f9268c6c55233aa3025619f7da2b3daac8aefd",
         "type": "github"
       },
       "original": {
@@ -555,16 +571,14 @@
     "ytm-player": {
       "inputs": {
         "flake-utils": "flake-utils_2",
-        "nixpkgs": [
-          "nixpkgs"
-        ]
+        "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1788622624,
-        "narHash": "sha256-QeYOuSL00kdNt/u2QsjjFTbPZ+AMxQcONVD/YeNgPbg=",
+        "lastModified": 1788628883,
+        "narHash": "sha256-Zp44O0lgdIDN3gYs03EqEaXego4oLxaKUDA5U/kyKAM=",
         "owner": "peternaame-boop",
         "repo": "ytm-player",
-        "rev": "a0e62b3c6db55ebc8d608f38b4963cfcc0d08470",
+        "rev": "30d9cbe11f90e716e6eb2fbe709dd973c7e39a1f",
         "type": "github"
       },
       "original": {
