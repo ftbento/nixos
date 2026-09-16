@@ -10,7 +10,7 @@ in
   "github-ftbento.age".publicKeys = [ benjidev_radon benjidev_elitebook_wsl argon ];
   "cop3223c.age".publicKeys = [ benjidev_radon benjidev_elitebook_wsl];
 
-  "couchdb-env.age".publicKeys = [ argon ];
+  "couchdb-env.age".publicKeys = [ argon benjidev_radon benjidev_elitebook_wsl ];
 }
 
 # paste the private key in the editor

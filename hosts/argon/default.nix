@@ -19,11 +19,10 @@ let
     [chttpd_auth]
     require_valid_user = true
     hash_algorithms = sha256, sha
-    authentication_redirect = /_utils/#/login
 
     [httpd]
     enable_cors = true
-    WWW-Authenticate = Cookie
+    WWW-Authenticate = Basic realm="couchdb"
 
     [cors]
     credentials = true
