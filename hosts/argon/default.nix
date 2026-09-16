@@ -73,7 +73,18 @@ in
       file = ../../secrets/couchdb-env.age;
       mode = "0400";
     };
+    github-ftbento = {
+      file = ../../secrets/github-ftbento.age;
+      owner = "root";
+    };
   };
+
+  # Use the agenix-decrypted GitHub key for git pulls (and git protocol over ssh)
+  programs.ssh.extraConfig = ''
+    Host github.com
+      IdentityFile ${config.age.secrets."github-ftbento".path}
+      IdentitiesOnly yes
+  '';
 
   # Authorized Keys for Remote Access
   users.users.root.openssh.authorizedKeys.keys = [
