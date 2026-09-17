@@ -17,6 +17,7 @@
     ../modules/software/fuzzel.nix
     ../modules/software/flatpak.nix
     ../modules/software/rustdesk.nix
+    ../modules/software/vpn.nix
     inputs.qylock.nixosModules.default
     users.benjidev
   ];
@@ -122,6 +123,7 @@
           "$mainMod, Q, killactive"
           "$mainMod, Return, exec, $terminal"
           "$mainMod, Escape, exec, ambxst lock"
+          "$mainMod, A, exec, pwvucontrol"
           ", Print, exec, hyprshot -m region --clipboard-only"
           "$mainMod, Print, exec, hyprshot -m output --clipboard-only"
           "$mainMod SHIFT, Print, exec, hyprshot -m window --clipboard-only"
