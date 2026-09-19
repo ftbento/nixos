@@ -12,7 +12,7 @@
     ../modules/core/systemd.nix       # don't restart display-manager on update
     ../modules/wm/hyprland.nix
     ../modules/wm/hyprlock.nix
-    ../modules/shell/ambxst.nix
+    inputs.noctalia.nixosModules.default
     ../modules/software/gaming.nix
     ../modules/software/fuzzel.nix
     ../modules/software/flatpak.nix
@@ -22,8 +22,22 @@
     users.benjidev
   ];
 
-  # ambxst needs to know which user to assign hardware groups to.
-  workstation.ambxst.user = "benjidev";
+  # Noctalia desktop shell (bar, launcher, lock screen, widgets). Recommended
+  # services cover NetworkManager/Bluetooth/UPower/power-profiles-daemon; the
+  # shell itself is launched from Hyprland's exec-once below. A config.toml is
+  # generated via the Home Manager module so first boot skips the setup wizard.
+  programs.noctalia = {
+    enable = true;
+    recommendedServices.enable = true;
+  };
+
+  # Explicitly require NetworkManager (VPN module + blueman depend on it); don't
+  # rely on Noctalia's recommendedServices mkDefault keeping it enabled.
+  networking.networkmanager.enable = true;
+
+  # System groups the shell needs for hardware access.
+  hardware.i2c.enable = true;
+  users.users.benjidev.extraGroups = [ "video" "i2c" ];
 
   # SDDM login screen themed with the qylock Qt6 theme. The X server is only
   # enabled to host the greeter; the actual session is Hyprland/Wayland.
@@ -34,12 +48,45 @@
   programs.qylock = {
     enable = true;
     theme = "nothing";
-    sddm.enable = true;        # install + activate the SDDM theme
-    quickshell.enable = false; # keep ambxst as the after-login lock screen
+    sddm.enable = true;        # install + activate the qylock SDDM login screen
+    quickshell.enable = true;  # qylock-lock used as the after-login lock screen
   };
 
   # Desktop home-manager configuration for the primary user.
   home-manager.users.benjidev = {
+    imports = [ inputs.noctalia.homeModules.default ];
+
+    # Declarative Noctalia config (~/.config/noctalia/config.toml). Kept small —
+    # everything not listed falls back to upstream defaults. setup_wizard_enabled
+    # skips the first-run wizard; Catppuccin matches Stylix's catppuccin-mocha.
+    # Radon uses Hyprland's scrolling layout, not Niri, which Noctalia supports
+    # directly. qylock stays the lock screen (Super+Escape), so Noctalia's own
+    # lockscreen is disabled.
+    programs.noctalia = {
+      enable = true;
+      package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
+      settings = {
+        shell = {
+          setup_wizard_enabled = false;
+          telemetry_enabled = false;
+          polkit_agent = true;
+          clipboard_enabled = true;
+        };
+        theme = {
+          mode = "dark";
+          source = "builtin";
+          builtin = "Catppuccin";
+        };
+        bar.main = {
+          position = "top";
+          start = [ "launcher" "workspaces" ];
+          center = [ "clock" ];
+          end = [ "tray" "notifications" "network" "volume" "control-center" "session" ];
+        };
+        lockscreen.enabled = false;
+      };
+    };
+
     # Hyprland uses hyprcursor; make sure the Bibata theme (set via stylix.cursor)
     # is also picked up by Hyprland instead of the default Hyprland logo cursor.
     home.pointerCursor.hyprcursor.enable = true;
@@ -57,7 +104,7 @@
         "$mainMod" = "SUPER";
 
         exec-once = [
-          "ambxst"
+          "noctalia"
           "hyprctl setcursor Bibata-Modern-Classic 24"
           "wl-paste --type text --watch cliphist store"
           "wl-paste --type image --watch cliphist store"
@@ -118,15 +165,24 @@
         };
 
         bind = [
-          "$mainMod, D, exec, ambxst run launcher"
-          "$mainMod, V, exec, ambxst run clipboard"
+          # Noctalia IPC: launcher, control center, settings, window switcher
+          "$mainMod, Space, exec, noctalia msg panel-toggle launcher"
+          "$mainMod, S, exec, noctalia msg panel-toggle control-center"
+          "$mainMod, comma, exec, noctalia msg settings-toggle"
+          "ALT, Tab, exec, noctalia msg window-switcher"
+          # Media/volume/brightness go through Noctalia so its OSD & widgets track them
           "$mainMod, Q, killactive"
           "$mainMod, Return, exec, $terminal"
-          "$mainMod, Escape, exec, ambxst lock"
+          "$mainMod, Escape, exec, qylock-lock"
           "$mainMod, A, exec, pwvucontrol"
           ", Print, exec, hyprshot -m region --clipboard-only"
           "$mainMod, Print, exec, hyprshot -m output --clipboard-only"
           "$mainMod SHIFT, Print, exec, hyprshot -m window --clipboard-only"
+          "XF86AudioRaiseVolume, exec, noctalia msg volume-up"
+          "XF86AudioLowerVolume, exec, noctalia msg volume-down"
+          "XF86AudioMute, exec, noctalia msg volume-mute"
+          "XF86MonBrightnessUp, exec, noctalia msg brightness-up"
+          "XF86MonBrightnessDown, exec, noctalia msg brightness-down"
           "$mainMod, h, layoutmsg, focus l"
           "$mainMod, l, layoutmsg, focus r"
           "$mainMod, k, layoutmsg, focus u"
@@ -147,11 +203,23 @@
           "$mainMod, mouse:272, movewindow"
           "$mainMod, mouse:273, resizewindow"
         ];
+
+        # Blur behind Noctalia layer-shell surfaces (bar, panels, notifications, OSD)
+        layerrule = [
+          "blur, ^noctalia-(bar-.+|notification|dock|panel|attached-panel|osd|window-switcher)$"
+        ];
+
+        # Float the Noctalia settings window like a dialog
+        windowrule = [
+          "float, class:^(dev\\.noctalia\\.Noctalia)$"
+          "size 1080 920, class:^(dev\\.noctalia\\.Noctalia)$"
+        ];
       };
     };
 
-    # Notifications
-    services.swaync.enable = true;
+    # Notifications — Noctalia provides the daemon (enable_daemon default true),
+    # so swaync is intentionally not enabled here (both would fight over the
+    # org.freedesktop.Notifications DBus name).
 
     # Audio visualizer — via HM so Stylix can theme it
     programs.cava.enable = true;

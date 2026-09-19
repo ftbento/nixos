@@ -34,8 +34,13 @@
       url = "github:peternaame-boop/ytm-player";
     };
 
-    ambxst = {
-      url = "github:Axenide/Ambxst";
+    noctalia = {
+      url = "github:noctalia-dev/noctalia";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
+    };
+
+    opencode = {
+      url = "github:anomalyco/opencode";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
   };

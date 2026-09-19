@@ -16,14 +16,13 @@ picking the right profile(s) rather than copying/replicating config.
 ├── profiles/                  # Reusable personas (the key layer)
 │   ├── core.nix               # Shared by EVERY device (barebones: flakes, secrets,
 │   │                          #   home-manager base, tailscale, nh, man)
-│   └── desktop.nix            # Interactive desktop (Hyprland, gaming, ambxst,
+│   └── desktop.nix            # Interactive desktop (Hyprland, gaming, noctalia,
 │                              #   stylix, sddm/qylock) — imported by radon, laptop, ...
 ├── modules/                   # Fine-grained NixOS modules (opt-in via import)
 │   ├── core/                  #   core, nix, systemd, agenix, home-manager,
 │   │                          #   nh, tailscale, graphics, pipewire, bluetooth,
 │   │                          #   stylix, gpu/{amd,nvidia}
 │   ├── software/              #   gaming, flatpak, fuzzel
-│   ├── shell/                 #   ambxst
 │   ├── tweaks/                #   man
 │   └── wm/                    #   hyprland, hyprlock
 ├── home/                      # Home-manager user profiles + shared HM modules
@@ -46,7 +45,7 @@ picking the right profile(s) rather than copying/replicating config.
 | Profile     | Applies to            | Contents |
 |-------------|-----------------------|----------|
 | `core.nix`  | Every device          | nix flakes, agenix, home-manager base, nh, tailscale, man, timezone/locale |
-| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland, hyprlock, ambxst, gaming, fuzzel, flatpak, sddm/qylock, desktop home-manager, user account |
+| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland, hyprlock, noctalia, gaming, fuzzel, flatpak, sddm/qylock, desktop home-manager, user account |
 
 Each host imports `core.nix` plus the appropriate persona, then the host file
 keeps only what is truly host-specific. Headless servers (like argon) are

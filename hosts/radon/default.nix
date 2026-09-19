@@ -33,16 +33,10 @@
   services.xserver.enable = true;
   services.displayManager.sddm.enable = true;
 
-  programs.qylock = {
-    enable = true;
-    theme = "nothing";
-    sddm.enable = true;        # install + activate the SDDM theme
-    quickshell.enable = false; # keep ambxst as the after-login lock screen
-  };
-
   # Host-specific system packages
   environment.systemPackages = with pkgs; [
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
+    inputs.opencode.packages.${pkgs.stdenv.hostPlatform.system}.default
     vscode
   ];
 
