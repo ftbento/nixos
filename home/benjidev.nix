@@ -1,5 +1,7 @@
 { config, pkgs, lib, inputs, ... }: let
   username = "benjidev";
+
+  pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 in {
   # System-level user creation
   programs.fish.enable = true;
@@ -36,7 +38,7 @@ in {
         bitwarden-desktop
         comma
         unzip
-        opencode
+        pkgs-unstable.opencode
         yt-dlp
         grc
         playerctl
