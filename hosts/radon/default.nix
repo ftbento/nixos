@@ -55,51 +55,10 @@
     };
   };
 
-  # Host-specific monitor layout + workspace keybinds. Generic Hyprland settings
-  # (binds, animations, etc.) live in profiles/desktop.nix.
-  home-manager.users.benjidev.wayland.windowManager.hyprland.settings = {
-    monitor = [
-      ", preferred, auto, 1"
-      "DP-5, 2560x1440@164.96, 0x0, 1"
-      "HDMI-A-5, 1920x1080@60, 320x-1080, 1, transform, 2"
-    ];
-
-    workspace = [
-      "1, monitor:DP-5"
-      "2, monitor:DP-5"
-      "3, monitor:DP-5"
-      "4, monitor:DP-5"
-      "5, monitor:DP-5"
-      "6, monitor:HDMI-A-5"
-      "7, monitor:HDMI-A-5"
-      "8, monitor:HDMI-A-5"
-      "9, monitor:HDMI-A-5"
-      "10, monitor:HDMI-A-5"
-    ];
-
-    exec-once = [
-      "xrandr --output DP-5 --primary"
-      "steam -silent"
-    ];
-
-    bind = [
-      "$mainMod, 1, workspace, 6"
-      "$mainMod, 1, workspace, 1"
-      "$mainMod, 2, workspace, 7"
-      "$mainMod, 2, workspace, 2"
-      "$mainMod, 3, workspace, 8"
-      "$mainMod, 3, workspace, 3"
-      "$mainMod, 4, workspace, 9"
-      "$mainMod, 4, workspace, 4"
-      "$mainMod, 5, workspace, 10"
-      "$mainMod, 5, workspace, 5"
-      "$mainMod SHIFT, 1, movetoworkspace, 1"
-      "$mainMod SHIFT, 2, movetoworkspace, 2"
-      "$mainMod SHIFT, 3, movetoworkspace, 3"
-      "$mainMod SHIFT, 4, movetoworkspace, 4"
-      "$mainMod SHIFT, 5, movetoworkspace, 5"
-    ];
-  };
+  # Host-specific monitor/workspace layout lives in the Lua config now
+  # (hyprland.lua requires host.lua). Keybinds are gone from here — nothing to
+  # bind workspace numbers, Super+Shift+scroll switches workspaces.
+  home-manager.users.benjidev.xdg.configFile."hypr/host.lua".source = ./hyprland-host.lua;
 
   # System state version - DO NOT CHANGE this after first install
   system.stateVersion = "26.05";

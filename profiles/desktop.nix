@@ -56,34 +56,223 @@
   home-manager.users.benjidev = {
     imports = [ inputs.noctalia.homeModules.default ];
 
-    # Declarative Noctalia config (~/.config/noctalia/config.toml). Kept small —
-    # everything not listed falls back to upstream defaults. setup_wizard_enabled
-    # skips the first-run wizard; Catppuccin matches Stylix's catppuccin-mocha.
-    # Radon uses Hyprland's scrolling layout, not Niri, which Noctalia supports
-    # directly. qylock stays the lock screen (Super+Escape), so Noctalia's own
-    # lockscreen is disabled.
+    # Declarative Noctalia config (~/.config/noctalia/config.toml). Everything
+    # that was previously tweaked at runtime (bar layout, launcher, wallpaper,
+    # theme, control-center tabs, desktop widgets, ...) now lives here so the
+    # declarative file owns the shell. setup_wizard_enabled skips the first-run
+    # wizard. qylock stays the lock screen everywhere (Super+Escape bind AND the
+    # session-menu Lock action), so Noctalia's own lockscreen is off.
     programs.noctalia = {
       enable = true;
       package = inputs.noctalia.packages.${pkgs.stdenv.hostPlatform.system}.default;
       settings = {
+        # Built-in GPU screen recorder (gpu-screen-recorder): powers the
+        # `screen_recorder` control-center shortcut and plugin toggle/replay.
+        plugins.enabled = [ "noctalia/screen_recorder" ];
+
+        # Runtime-tuned battery threshold for the mouse battery.
+        battery.device."/org/freedesktop/UPower/devices/battery_hidpp_battery_0".warning_threshold = 25;
+
         shell = {
+          font_family = "JetBrainsMono NF";
           setup_wizard_enabled = false;
           telemetry_enabled = false;
           polkit_agent = true;
           clipboard_enabled = true;
+          screenshot = {
+            copy_to_clipboard = true;
+            save_to_file = true;
+          };
+          launcher = {
+            categories = false;
+            compact = true;
+            show_icons = true;
+            show_app_origin_indicator = false;
+            sort_by_usage = true;
+          };
+          panel = {
+            launcher_placement = "floating";
+            launcher_position = "center";
+            clipboard_placement = "floating";
+            clipboard_position = "center";
+            control_center_placement = "attached";
+            session_placement = "attached";
+          };
+          session = {
+            grid_columns = 2;
+            actions = [
+              { action = "lock"; command = "qylock-lock"; }
+              { action = "suspend"; }
+              { action = "hibernate"; }
+              { action = "logout"; }
+              { action = "reboot"; }
+              { action = "shutdown"; }
+            ];
+          };
+          screen_corners = {
+            enabled = true;
+            size = 35;
+          };
         };
-        theme = {
-          mode = "dark";
-          source = "builtin";
-          builtin = "Catppuccin";
-        };
+
+        # The bar is three separate capsule "bubbles" rather than one continuous
+        # strip: transparent bar background, so only the capsule groups are
+        # visible, spread across the full width via margin_ends = 0. layer stays
+        # "top" (the default), so the bar is already hidden beneath fullscreen
+        # apps. Layout: (notifications workspaces) | (control center) |
+        # (tray) (volume battery session).
         bar.main = {
           position = "top";
-          start = [ "launcher" "workspaces" ];
-          center = [ "clock" ];
-          end = [ "tray" "notifications" "network" "volume" "control-center" "session" ];
+          background_opacity = 0;
+          margin_ends = 0;
+          start  = [ "group:start" ];
+          center = [ "group:center" ];
+          end    = [ "group:end" "group:end2" ];
+          capsule_group = [
+            { id = "start";  members = [ "notifications" "workspaces" ]; padding = 12; }
+            { id = "center"; members = [ "control-center" ]; padding = 12; }
+            { id = "end";    members = [ "tray" ]; padding = 12; }
+            { id = "end2";   members = [ "volume" "battery" "session" ]; padding = 12; }
+          ];
         };
+        widget.volume.show_label = false;
+        # Center control-center widget: Nix logo instead of the Noctalia glyph,
+        # tinted with the widget color like the other bar icons.
+        widget."control-center" = {
+          custom_image = "~/.config/noctalia/nix-snowflake.svg";
+          custom_image_colorize = true;
+        };
+        widget.settings.enabled = false;
+
+        control_center = {
+          hidden_tabs = [ "monitor" "screen-time" ];
+          sidebar_section = "none";
+          shortcuts = [
+            { type = "wifi"; }
+            { type = "bluetooth"; }
+            # Full plugin entry id (author/plugin:entry); "screen_recorder" alone
+            # doesn't resolve to anything and the tile silently disappears.
+            { type = "noctalia/screen_recorder:toggle"; }
+            { type = "session"; }
+          ];
+          calendar = {
+            show_events_card = true;
+            show_week_numbers = false;
+          };
+        };
+        calendar = {
+          enabled = true;
+          refresh_minutes = 15;
+        };
+        weather = {
+          enabled = true;
+          refresh_minutes = 30;
+          unit = "celsius";
+          effects = true;
+        };
+        location.auto_locate = true;
+        notification.enable_daemon = true;
+        osd.position = "bottom";
+        system.monitor = {
+          enabled = true;
+          cpu_poll_seconds = 2.0;
+          gpu_poll_seconds = 5.0;
+          memory_poll_seconds = 2.0;
+          network_poll_seconds = 3.0;
+          disk_poll_seconds = 10.0;
+        };
+
+        # Theme and wallpaper track the runtime state: colors derive from the
+        # wallpaper (Oxocarbon palette), Pixelfed default.jpg on every output.
+        theme = {
+          mode = "dark";
+          source = "wallpaper";
+          builtin = "Catppuccin";
+          community_palette = "Oxocarbon";
+        };
+        wallpaper = {
+          enabled = true;
+          default.path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
+          monitors."DP-5".path     = "/home/benjidev/Pictures/Wallpapers/default.jpg";
+          monitors."HDMI-A-5".path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
+        };
+
+        # qylock stays the lock screen everywhere (Super+Escape bind AND the
+        # session-menu Lock action), so Noctalia's own lockscreen is off.
         lockscreen.enabled = false;
+
+        # Desktop widgets configured in the GUI (audio visualizer, clock,
+        # weather) on DP-5.
+        desktop_widgets = {
+          schema_version = 2;
+          widget_order = [
+            "desktop-widget-0000000000000001"
+            "desktop-widget-0000000000000002"
+            "desktop-widget-0000000000000004"
+          ];
+          grid = {
+            cell_size = 16;
+            major_interval = 4;
+            visible = true;
+          };
+          widget = {
+            "desktop-widget-0000000000000001" = {
+              box_height = 80.0;
+              box_width = 2560.0;
+              cx = 1280.0;
+              cy = 72.0;
+              flip_y = true;
+              output = "DP-5";
+              placement_height = 1440.0;
+              placement_width = 2560.0;
+              rotation = 0.0;
+              type = "audio_visualizer";
+              settings = {
+                background = false;
+                bands = 100;
+                centered = false;
+                mirrored = true;
+                reversed = false;
+                show_when_idle = false;
+              };
+            };
+            "desktop-widget-0000000000000002" = {
+              box_height = 240.0;
+              box_width = 304.0;
+              cx = 1864.0;
+              cy = 320.0;
+              output = "DP-5";
+              placement_height = 1440.0;
+              placement_width = 2560.0;
+              rotation = 0.0;
+              type = "clock";
+              settings = {
+                background = false;
+                clock_style = "analog";
+                color = "on_surface";
+                font_family = "";
+                shadow = true;
+                timezone = "America/New_York";
+              };
+            };
+            "desktop-widget-0000000000000004" = {
+              box_height = 64.0;
+              box_width = 160.0;
+              cx = 1872.0;
+              cy = 464.0;
+              output = "DP-5";
+              placement_height = 1440.0;
+              placement_width = 2560.0;
+              rotation = 0.0;
+              type = "weather";
+              settings = {
+                background = false;
+                shadow = true;
+                show_forecast = false;
+              };
+            };
+          };
+        };
       };
     };
 
@@ -91,131 +280,13 @@
     # is also picked up by Hyprland instead of the default Hyprland logo cursor.
     home.pointerCursor.hyprcursor.enable = true;
 
-    # Generic Hyprland settings. Monitors/keybinds stay in the host file so a
-    # laptop can override the multi-monitor layout cleanly.
-    wayland.windowManager.hyprland = {
-      enable = true;
-      package = null;
-      configType = "hyprlang";
-      systemd.enable = false; # UWSM handles systemd session integration
-
-      settings = {
-        "$terminal" = "kitty";
-        "$mainMod" = "SUPER";
-
-        exec-once = [
-          "noctalia"
-          "hyprctl setcursor Bibata-Modern-Classic 24"
-          "wl-paste --type text --watch cliphist store"
-          "wl-paste --type image --watch cliphist store"
-        ];
-
-        input = {
-          kb_layout = "us";
-          kb_options = "caps:super";
-          sensitivity = -0.25;
-          follow_mouse = 2; # pointer focus follows cursor, keyboard stays on last click
-        };
-
-        cursor = {
-          no_hardware_cursors = true;
-        };
-
-        general = {
-          gaps_in = 5;
-          gaps_out = 10;
-          border_size = 2;
-          layout = "scrolling";
-        };
-
-        scrolling = {
-          column_width = 1.0;
-          fullscreen_on_one_column = true;
-        };
-
-        decoration = {
-          rounding = 10;
-          blur = {
-            enabled = true;
-            size = 4;
-            passes = 2;
-          };
-        };
-
-        animations = {
-          enabled = true;
-
-          bezier = [
-            "easeOutCubic, 0.33, 1, 0.68, 1"
-            "easeInOutCubic, 0.65, 0.05, 0.36, 1"
-            "easeOutQuint, 0.23, 1, 0.32, 1"
-            "snappy, 0.15, 0, 0.1, 1"
-            "linear, 1, 1, 1, 1"
-          ];
-
-          animation = [
-            "windows, 1, 7, easeOutQuint"
-            "windowsOut, 1, 7, easeOutQuint, popin 80%"
-            "border, 1, 10, easeOutCubic"
-            "borderangle, 1, 8, easeInOutCubic"
-            "fade, 1, 7, easeOutCubic"
-            "workspaces, 1, 6, easeOutQuint"
-            "windowsMove, 1, 7, easeOutQuint"
-          ];
-        };
-
-        bind = [
-          # Noctalia IPC: launcher, control center, settings, window switcher
-          "$mainMod, Space, exec, noctalia msg panel-toggle launcher"
-          "$mainMod, S, exec, noctalia msg panel-toggle control-center"
-          "$mainMod, comma, exec, noctalia msg settings-toggle"
-          "ALT, Tab, exec, noctalia msg window-switcher"
-          # Media/volume/brightness go through Noctalia so its OSD & widgets track them
-          "$mainMod, Q, killactive"
-          "$mainMod, Return, exec, $terminal"
-          "$mainMod, Escape, exec, qylock-lock"
-          "$mainMod, A, exec, pwvucontrol"
-          ", Print, exec, hyprshot -m region --clipboard-only"
-          "$mainMod, Print, exec, hyprshot -m output --clipboard-only"
-          "$mainMod SHIFT, Print, exec, hyprshot -m window --clipboard-only"
-          "XF86AudioRaiseVolume, exec, noctalia msg volume-up"
-          "XF86AudioLowerVolume, exec, noctalia msg volume-down"
-          "XF86AudioMute, exec, noctalia msg volume-mute"
-          "XF86MonBrightnessUp, exec, noctalia msg brightness-up"
-          "XF86MonBrightnessDown, exec, noctalia msg brightness-down"
-          "$mainMod, h, layoutmsg, focus l"
-          "$mainMod, l, layoutmsg, focus r"
-          "$mainMod, k, layoutmsg, focus u"
-          "$mainMod, j, layoutmsg, focus d"
-          "$mainMod, mouse_up, layoutmsg, move +col"
-          "$mainMod, mouse_down, layoutmsg, move -col"
-          "$mainMod SHIFT, h, layoutmsg, swapcol l"
-          "$mainMod SHIFT, l, layoutmsg, swapcol r"
-          "$mainMod SHIFT, k, layoutmsg, expel"
-          "$mainMod SHIFT, j, layoutmsg, consume"
-          "$mainMod CTRL, h, layoutmsg, colresize -conf"
-          "$mainMod CTRL, l, layoutmsg, colresize +conf"
-          "$mainMod CTRL, k, layoutmsg, colresize -0.05"
-          "$mainMod CTRL, j, layoutmsg, colresize +0.05"
-        ];
-
-        bindm = [
-          "$mainMod, mouse:272, movewindow"
-          "$mainMod, mouse:273, resizewindow"
-        ];
-
-        # Blur behind Noctalia layer-shell surfaces (bar, panels, notifications, OSD)
-        layerrule = [
-          "blur, ^noctalia-(bar-.+|notification|dock|panel|attached-panel|osd|window-switcher)$"
-        ];
-
-        # Float the Noctalia settings window like a dialog
-        windowrule = [
-          "float, class:^(dev\\.noctalia\\.Noctalia)$"
-          "size 1080 920, class:^(dev\\.noctalia\\.Noctalia)$"
-        ];
-      };
-    };
+    # Hyprland is fully configured through the Lua API (Hyprland >= 0.55 loads
+    # hyprland.lua and never reads a .conf, so no hyprland.conf is generated).
+    # The home-manager hyprland module is intentionally NOT enabled.
+    # Desktop-wide settings live in modules/wm/hyprland.lua; the entry requires
+    # a per-host host.lua (installed by each host that uses the desktop profile).
+    xdg.configFile."hypr/hyprland.lua".source = ../modules/wm/hyprland.lua;
+    xdg.configFile."noctalia/nix-snowflake.svg".source = ../config/nix-snowflake.svg;
 
     # Notifications — Noctalia provides the daemon (enable_daemon default true),
     # so swaync is intentionally not enabled here (both would fight over the

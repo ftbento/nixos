@@ -26,8 +26,9 @@
   # boot.loader.grub.theme = ./THEME_FOLDER
   # boot.loader.systemd-boot.enable = true;
 
-  # For a desktop host, host-specific Hyprland monitors/keybinds go in:
-  #   home-manager.users.<user>.wayland.windowManager.hyprland.settings = { ... };
+  # For a desktop host, host-specific Hyprland monitors/workspaces go in a
+  # host.lua (see hosts/radon/hyprland-host.lua) installed via:
+  #   home-manager.users.<user>.xdg.configFile."hypr/host.lua".source = ./hyprland-host.lua;
 
   # System state version - DO NOT CHANGE this after first install
   system.stateVersion = "26.05"; # CHANGE THIS TO MATCH YOUR NIXOS VERSION
