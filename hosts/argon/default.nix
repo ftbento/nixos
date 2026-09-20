@@ -31,6 +31,93 @@ let
     headers = accept, authorization, content-type, origin, referer
     methods = GET, PUT, POST, HEAD, DELETE
   '';
+
+  # Declarative RackPeek inventory documenting this server and its services.
+  # Schema v2: https://raw.githubusercontent.com/Timmoth/RackPeek/main/schemas/v2/schema.v2.json
+  # Hardware facts captured from the live host (Ryzen 5 3400G, ~10 GB RAM,
+  # 256 GB NVMe, Gigabit NIC). Nix is the source of truth — this YAML is
+  # regenerated on every rebuild and not edited through the web UI.
+  rackpeekSpec = {
+    version = 2;
+    resources = [
+      {
+        kind = "Server";
+        name = "argon";
+        tags = [ "home-server" "nixos" ];
+        notes = "Headless home server running NixOS.";
+        labels = {
+          hostname = "argon";
+          ip = "10.8.90.205";
+        };
+        ram = { size = 10; };
+        cpus = [
+          {
+            model = "AMD Ryzen 5 3400G with Radeon Vega Graphics";
+            cores = 4;
+            threads = 8;
+          }
+        ];
+        drives = [ { type = "nvme"; size = 256; } ];
+        nics = [ { type = "rj45"; speed = 1000; ports = 1; } ];
+      }
+      {
+        kind = "System";
+        name = "nixos";
+        runsOn = [ "argon" ];
+        type = "baremetal";
+        os = "NixOS 26.05 (Yarara), kernel 6.18.46";
+        cores = 8;
+        ram = 10;
+        drives = [ { type = "nvme"; size = 256; } ];
+      }
+      {
+        kind = "Service";
+        name = "openssh";
+        runsOn = [ "argon" ];
+        network = {
+          ip = "10.8.90.205";
+          port = 205;
+          protocol = "TCP";
+        };
+      }
+      {
+        kind = "Service";
+        name = "obsidian-livesync";
+        notes = "CouchDB 3.3.3 container serving Obsidian LiveSync.";
+        runsOn = [ "argon" ];
+        network = {
+          ip = "10.8.90.205";
+          port = 5984;
+          protocol = "TCP";
+          url = "https://argon.note-tawny.ts.net";
+        };
+      }
+      {
+        kind = "Service";
+        name = "tailscale";
+        runsOn = [ "argon" ];
+        network = {
+          ip = "10.8.90.205";
+          port = 41641;
+          protocol = "UDP";
+        };
+      }
+      {
+        kind = "Service";
+        name = "rackpeek";
+        notes = "Homelab documentation web UI backed by this declarative YAML.";
+        runsOn = [ "argon" ];
+        network = {
+          ip = "10.8.90.205";
+          port = 8080;
+          protocol = "TCP";
+          url = "http://argon.note-tawny.ts.net:8080";
+        };
+      }
+    ];
+  };
+
+  rackpeekYaml = (pkgs.formats.yaml {}).generate "config.yaml" rackpeekSpec;
 in
 {
   imports = [
@@ -104,6 +191,7 @@ in
     allowedTCPPorts = [
       205    # SSH
       5984   # Obsidian LiveSync
+      8080   # RackPeek (LAN + tailnet)
     ];
     allowedUDPPorts = [
       41641  # Tailscale
@@ -122,6 +210,16 @@ in
     mkdir -p /var/lib/obsidian-livesync
     cp -f ${couchdbConfig} /var/lib/obsidian-livesync/10-livesync.ini
   '';
+  # Declarative RackPeek state: overwritten every rebuild so the docs always
+  # match the NixOS config (Nix is the source of truth, not the web UI).
+  system.activationScripts.rackpeek.text = ''
+    mkdir -p /var/lib/rackpeek
+    cp -f ${rackpeekYaml} /var/lib/rackpeek/config.yaml
+    # RackPeek runs as UID 1654 (app) and rewrites config.yaml (keeping a .bak),
+    # so the state dir + file must be owned by that UID.
+    chown -R 1654:1654 /var/lib/rackpeek
+    chmod 0660 /var/lib/rackpeek/config.yaml
+  '';
   virtualisation.oci-containers.containers = {
     obsidian-livesync = {
       image = "couchdb:3.3.3";
@@ -132,6 +230,13 @@ in
       volumes = [
         "/var/lib/obsidian-livesync:/opt/couchdb/data"
         "/var/lib/obsidian-livesync/10-livesync.ini:/opt/couchdb/etc/local.d/10-livesync.ini"
+      ];
+    };
+    rackpeek = {
+      image = "aptacode/rackpeek:v2.0.0";
+      ports = [ "8080:8080" ];
+      volumes = [
+        "/var/lib/rackpeek:/app/config"
       ];
     };
   };
