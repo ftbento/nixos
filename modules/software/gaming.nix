@@ -1,4 +1,4 @@
-{ pkgs, ... }: {
+{ config, pkgs, ... }: {
   # --- Steam (with gaming optimisations) ---
   programs.steam = {
     enable = true;
@@ -42,7 +42,7 @@
   };
 
   # --- MangoHud (perf overlay, themed by Stylix) ---
-  home-manager.users.benjidev.programs.mangohud = {
+  home-manager.users.${config.workstation.user}.programs.mangohud = {
     enable = true;
     enableSessionWide = true;
     settings = {

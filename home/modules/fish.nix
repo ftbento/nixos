@@ -1,8 +1,10 @@
 { config, lib, pkgs, ... }:
 
-# Concrete fish aliases are baked in here (see `bakedAliases`). Use
-# `home.fish.extraAliases` for secret-dependent aliases that need a value from
-# the NixOS scope (e.g. an agenix secret path), which is unavailable in HM scope.
+# Starter aliases are baked in per-user here — generic ones only. Machine-
+# specific aliases (e.g. an `argon` ssh alias that only makes sense on radon)
+# go in `home.fish.extraAliases` for the user that has them. Use that same
+# option for secret-dependent aliases that need a value from the NixOS scope
+# (e.g. an agenix secret path), which is unavailable in HM scope.
 let
   aliases = {
     nhswitch = "nh os switch ~/nixos";
@@ -13,7 +15,6 @@ let
     nhlist = "nixos-rebuild list-generations";
     ff = "fastfetch";
     ".." = "cd ..";
-    argon = "ssh argon";
   };
 in
 {

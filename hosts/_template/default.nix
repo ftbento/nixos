@@ -7,13 +7,19 @@
     # ../../profiles/desktop.nix  # For an interactive desktop machine (Hyprland, etc.)
     # For a headless server: keep core, and define the server stack (SSH,
     # firewall, containers) directly in this file — see hosts/argon.
+    # users.benjidev              # Primary user account (desktop hosts only):
+    #                             # import it here, NOT in the desktop profile.
   ];
 
   # Global options (allowUnfree, flake settings, ...) come from the core profile.
 
   networking.hostName = "<hostname>";
 
-  # Host-specific GPU driver (pick one):
+  # Primary desktop user — pick a name (defaults to "benjidev"); the desktop
+  # persona and the user module follow this instead of hardcoding one.
+  # workstation.user = "benjidev";
+
+  # Host-specific GPU driver (pick one — each pulls in the base graphics stack):
   # imports = [ ../../modules/core/gpu/amd.nix ];    # AMD
   # imports = [ ../../modules/core/gpu/nvidia.nix ]; # NVIDIA
 
@@ -26,9 +32,14 @@
   # boot.loader.grub.theme = ./THEME_FOLDER
   # boot.loader.systemd-boot.enable = true;
 
-  # For a desktop host, host-specific Hyprland monitors/workspaces go in a
-  # host.lua (see hosts/radon/hyprland-host.lua) installed via:
-  #   home-manager.users.<user>.xdg.configFile."hypr/host.lua".source = ./hyprland-host.lua;
+# For a desktop host, host-specific display bits go in the host file:
+#   - Hyprland monitors/workspaces in a host.lua (see hosts/radon/hyprland-host.lua)
+#     installed via:
+#       home-manager.users.<user>.xdg.configFile."hypr/host.lua".source = ./hyprland-host.lua;
+#   - Noctalia wallpaper + desktop widgets
+#     (see hosts/radon/default.nix — the desktop profile keeps these out of the
+#     shared layer). The lock screen is qylock-lock everywhere; hyprlock is not
+#     used.
 
   # System state version - DO NOT CHANGE this after first install
   system.stateVersion = "26.05"; # CHANGE THIS TO MATCH YOUR NIXOS VERSION

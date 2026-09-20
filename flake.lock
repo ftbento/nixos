@@ -370,26 +370,6 @@
         "type": "github"
       }
     },
-    "opencode": {
-      "inputs": {
-        "nixpkgs": [
-          "nixpkgs-unstable"
-        ]
-      },
-      "locked": {
-        "lastModified": 1789828307,
-        "narHash": "sha256-fVNSH2vqaauB2mOeD3FJEBAQl6E4199sJKdoIa4S6zE=",
-        "owner": "anomalyco",
-        "repo": "opencode",
-        "rev": "fee476bb90043a1012abda156dd9af9e5c71b19d",
-        "type": "github"
-      },
-      "original": {
-        "owner": "anomalyco",
-        "repo": "opencode",
-        "type": "github"
-      }
-    },
     "qylock": {
       "inputs": {
         "flake-compat": "flake-compat",
@@ -419,7 +399,6 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-unstable": "nixpkgs-unstable",
         "noctalia": "noctalia",
-        "opencode": "opencode",
         "qylock": "qylock",
         "stylix": "stylix",
         "ytm-player": "ytm-player",

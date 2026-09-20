@@ -21,18 +21,18 @@ picking the right profile(s) rather than copying/replicating config.
 ├── modules/                   # Fine-grained NixOS modules (opt-in via import)
 │   ├── core/                  #   core, nix, systemd, agenix, home-manager,
 │   │                          #   nh, tailscale, graphics, pipewire, bluetooth,
-│   │                          #   stylix, gpu/{amd,nvidia}
-│   ├── software/              #   gaming, flatpak, fuzzel
+│   │                          #   stylix, user, gpu/{amd,nvidia}
+│   ├── software/              #   gaming, flatpak
 │   ├── tweaks/                #   man
-│   └── wm/                    #   hyprland, hyprlock
+│   └── wm/                    #   hyprland
 ├── home/                      # Home-manager user profiles + shared HM modules
 │   ├── users.nix              # User registry (users.<username> = ./<username>.nix)
-│   ├── benjidev.nix           # User profile
+│   ├── benjidev.nix           # User profile (imported per-host via users.<username>)
 │   ├── _template-username.nix # User configuration template
 │   └── modules/               # Shared home-manager modules (fish, git, kitty, ...)
 │       ├── default.nix
 │       ├── fish.nix           # concrete aliases baked in
-│       ├── git.nix            # concrete identity baked in
+│       ├── git.nix            # git identity (parameterized; defaults to benjidev)
 │       ├── kitty.nix          # concrete settings baked in
 │       ├── yazi.nix
 │       └── fastfetch/
@@ -45,23 +45,31 @@ picking the right profile(s) rather than copying/replicating config.
 | Profile     | Applies to            | Contents |
 |-------------|-----------------------|----------|
 | `core.nix`  | Every device          | nix flakes, agenix, home-manager base, nh, tailscale, man, timezone/locale |
-| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland, hyprlock, noctalia, gaming, fuzzel, flatpak, sddm/qylock, desktop home-manager, user account |
+| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland, noctalia, gaming, flatpak, rustdesk, vpn, sddm/qylock, desktop home-manager (lock screen: qylock-lock) |
 
 Each host imports `core.nix` plus the appropriate persona, then the host file
 keeps only what is truly host-specific. Headless servers (like argon) are
 single-purpose machines, so their entire server stack (SSH, firewall, docker,
 containers) lives directly in the host file instead of a profile.
 
+The **user account is imported per-host**, not by the desktop profile: a desktop
+host imports its user module (e.g. `users.benjidev`) and sets `workstation.user`
+(see `modules/core/user.nix`) so the persona's Home Manager blocks key off that
+name instead of a hardcoded username.
+
 **What stays in the host file (not the profile):**
 - Hostname, `system.stateVersion`
-- Hardware: `hardware-configuration.nix`, GPU driver (`gpu/amd.nix` / `gpu/nvidia.nix`)
+- The user import (`users.benjidev` or a new one) + `workstation.user`
+- Hardware: `hardware-configuration.nix`, GPU driver (`gpu/amd.nix` / `gpu/nvidia.nix` — each pulls in graphics automatically)
 - Bootloader (grub theme vs systemd-boot), mountpoints
 - Hyprland **monitors and keybinds** (multi-monitor layout — host specific)
+- Hyprlock **backgrounds/wallpapers** and Noctalia **wallpaper + desktop widgets** (monitor- and layout-specific)
 - Server host bits: static IP, authorized keys, agenix secrets, the full server
   stack (SSH, firewall, docker, containers — unique per server)
 
 This means adding a laptop that mirrors radon is just: copy `hosts/radon`, swap
-`hardware-configuration.nix` + GPU driver + hostname.
+`hardware-configuration.nix` + GPU driver + `workstation.user` + hostname, and
+adjust the host display bits (host.lua, wallpapers/widgets).
 
 ## Adding a New Machine
 
@@ -78,8 +86,12 @@ This means adding a laptop that mirrors radon is just: copy `hosts/radon`, swap
    - Set `networking.hostName`
    - Import the right profile: `profiles/desktop.nix` (interactive) — headless
      servers skip this and define their server stack directly in the host file
-   - Import the host GPU driver (`gpu/amd.nix` / `gpu/nvidia.nix`)
-   - Set host-specific packages, bootloader, mountpoints, monitors/keybinds
+   - Import the host GPU driver (`gpu/amd.nix` / `gpu/nvidia.nix`; either pulls
+     in the base graphics stack itself)
+   - Import a user module and set `workstation.user` (desktop hosts): `users.benjidev`
+   - Set host display bits: `hypr/host.lua` (monitors/workspaces), Noctalia
+     backgrounds, Noctalia wallpapers/widgets
+   - Set host-specific packages, bootloader, mountpoints
    - Set `system.stateVersion`
 4. **Register the host in `flake.nix`:**
    ```nix
@@ -97,25 +109,33 @@ This means adding a laptop that mirrors radon is just: copy `hosts/radon`, swap
 ## Shared home-manager modules
 
 The home-manager modules (`home/modules/*`) expose a simple `home.<name>.enable`
-option. Because you have a single user, concrete values (fish aliases, git
-identity, kitty settings, yazi/fastfetch layout) are **baked directly into each
-module file** rather than configured per-user. A user profile just enables them:
+option. Generic starter values (fish aliases, git identity, kitty settings,
+yazi/fastfetch layout) are baked into each module file; user-specific values
+(git identity, machine-specific aliases) are set via options instead. A user
+profile just enables them:
 
 ```nix
 home-manager.users.benjidev = {
   imports = [ ./modules ];
-  home.git.enable = true;
+  home.git = {
+    enable = true;
+    userName = "ftbento";
+    userEmail = "ftbento@users.noreply.github.com";
+  };
   home.fish = {
     enable = true;
-    # extraAliases for secret-dependent aliases (need NixOS config scope)
-    extraAliases = { cop3223c = "ssh $(cat ${config.age.secrets.cop3223c.path})"; };
+    # machine- or secret-dependent aliases (need NixOS config scope for secrets)
+    extraAliases = {
+      argon = "ssh argon";                                  # radon-only
+      cop3223c = "ssh $(cat ${config.age.secrets.cop3223c.path})";
+    };
   };
 };
 ```
 
-If you later add a second user, either bake their own values in a copy of the
-module, or reintroduce per-user options — don't hardcode values for more than
-one user.
+A second user can be added by copying `home/_template-username.nix`, filling in
+their own `home.git.userName`/`userEmail` and `extraAliases`, registering the
+file in `home/users.nix`, and importing it per-host — no copy of a module needed.
 
 ## Theming (Stylix)
 
@@ -123,6 +143,6 @@ Global theming is provided by [Stylix](https://github.com/nix-community/stylix)
 via `modules/core/stylix.nix` (imported by the desktop profile):
 
 - Colors come from a base16 scheme (`catppuccin-mocha` by default); switch schemes by changing `stylix.base16Scheme` or derive colors from a wallpaper with `stylix.image`.
-- Applies to supported targets automatically: kitty, Hyprland (window borders/hyprlock/hyprpaper), GTK/Qt, fuzzel, swaync, btop, and more.
-- The custom GRUB theme (`targets.grub.enable = false`) and per-monitor hyprlock wallpapers are preserved.
-- Hyprland and hyprlock configs are managed through Home Manager so Stylix can theme them.
+- Applies to supported targets automatically: kitty, Hyprland (window borders), GTK/Qt, btop, and more.
+- The custom GRUB theme is preserved (`targets.grub.enable = false`).
+- Hyprland is configured through the Lua API. Lock screen and login screen are themed by qylock (qylock-lock + SDDM), not Stylix.

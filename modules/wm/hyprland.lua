@@ -94,10 +94,10 @@ hl.bind(mainMod .. " + h",           hl.dsp.layout("focus l"))
 hl.bind(mainMod .. " + l",           hl.dsp.layout("focus r"))
 hl.bind(mainMod .. " + k",           hl.dsp.layout("focus u"))
 hl.bind(mainMod .. " + j",           hl.dsp.layout("focus d"))
--- Super+scroll flips between columns; the wheel direction is inverted
--- relative to the stock binds so scrolling follows the column order.
-hl.bind(mainMod .. " + mouse_down",  hl.dsp.layout("move -col"))
-hl.bind(mainMod .. " + mouse_up",    hl.dsp.layout("move +col"))
+-- Super+scroll flips between columns: wheel down moves to the column on the
+-- right (next), wheel up moves to the column on the left (previous).
+hl.bind(mainMod .. " + mouse_down",  hl.dsp.layout("move +col"))
+hl.bind(mainMod .. " + mouse_up",    hl.dsp.layout("move -col"))
 -- Super+Shift+scroll switches workspaces (no numeric workspace binds)
 hl.bind(mainMod .. " + SHIFT + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + SHIFT + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))

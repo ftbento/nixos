@@ -12,6 +12,7 @@
     ../modules/core/home-manager.nix # home-manager base module
     ../modules/core/nh.nix           # nh (nix helper)
     ../modules/core/tailscale.nix    # tailscale network
+    ../modules/core/user.nix         # workstation.user — primary user account
     ../modules/tweaks/man.nix        # slim man page generation
   ];
 

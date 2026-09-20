@@ -2,7 +2,7 @@
 # (radon, laptop, ...) to get the full desktop stack. Host-specific bits
 # (GPU driver, monitors, keybinds, mountpoints) stay in the host file.
 
-{ config, lib, pkgs, inputs, users, ... }:
+{ config, lib, pkgs, inputs, ... }:
 {
   imports = [
     ../modules/core/graphics.nix      # OpenGL/Vulkan
@@ -11,15 +11,12 @@
     ../modules/core/stylix.nix        # theming
     ../modules/core/systemd.nix       # don't restart display-manager on update
     ../modules/wm/hyprland.nix
-    ../modules/wm/hyprlock.nix
     inputs.noctalia.nixosModules.default
     ../modules/software/gaming.nix
-    ../modules/software/fuzzel.nix
     ../modules/software/flatpak.nix
     ../modules/software/rustdesk.nix
     ../modules/software/vpn.nix
     inputs.qylock.nixosModules.default
-    users.benjidev
   ];
 
   # Noctalia desktop shell (bar, launcher, lock screen, widgets). Recommended
@@ -37,7 +34,7 @@
 
   # System groups the shell needs for hardware access.
   hardware.i2c.enable = true;
-  users.users.benjidev.extraGroups = [ "video" "i2c" ];
+  users.users.${config.workstation.user}.extraGroups = [ "video" "i2c" ];
 
   # SDDM login screen themed with the qylock Qt6 theme. The X server is only
   # enabled to host the greeter; the actual session is Hyprland/Wayland.
@@ -53,7 +50,7 @@
   };
 
   # Desktop home-manager configuration for the primary user.
-  home-manager.users.benjidev = {
+  home-manager.users.${config.workstation.user} = {
     imports = [ inputs.noctalia.homeModules.default ];
 
     # Declarative Noctalia config (~/.config/noctalia/config.toml). Everything
@@ -182,97 +179,17 @@
           disk_poll_seconds = 10.0;
         };
 
-        # Theme and wallpaper track the runtime state: colors derive from the
-        # wallpaper (Oxocarbon palette), Pixelfed default.jpg on every output.
+        # Theme colors derive from the runtime wallpaper (Oxocarbon palette).
         theme = {
           mode = "dark";
           source = "wallpaper";
           builtin = "Catppuccin";
           community_palette = "Oxocarbon";
         };
-        wallpaper = {
-          enabled = true;
-          default.path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
-          monitors."DP-5".path     = "/home/benjidev/Pictures/Wallpapers/default.jpg";
-          monitors."HDMI-A-5".path = "/home/benjidev/Pictures/Wallpapers/default.jpg";
-        };
 
         # qylock stays the lock screen everywhere (Super+Escape bind AND the
         # session-menu Lock action), so Noctalia's own lockscreen is off.
         lockscreen.enabled = false;
-
-        # Desktop widgets configured in the GUI (audio visualizer, clock,
-        # weather) on DP-5.
-        desktop_widgets = {
-          schema_version = 2;
-          widget_order = [
-            "desktop-widget-0000000000000001"
-            "desktop-widget-0000000000000002"
-            "desktop-widget-0000000000000004"
-          ];
-          grid = {
-            cell_size = 16;
-            major_interval = 4;
-            visible = true;
-          };
-          widget = {
-            "desktop-widget-0000000000000001" = {
-              box_height = 80.0;
-              box_width = 2560.0;
-              cx = 1280.0;
-              cy = 72.0;
-              flip_y = true;
-              output = "DP-5";
-              placement_height = 1440.0;
-              placement_width = 2560.0;
-              rotation = 0.0;
-              type = "audio_visualizer";
-              settings = {
-                background = false;
-                bands = 100;
-                centered = false;
-                mirrored = true;
-                reversed = false;
-                show_when_idle = false;
-              };
-            };
-            "desktop-widget-0000000000000002" = {
-              box_height = 240.0;
-              box_width = 304.0;
-              cx = 1864.0;
-              cy = 320.0;
-              output = "DP-5";
-              placement_height = 1440.0;
-              placement_width = 2560.0;
-              rotation = 0.0;
-              type = "clock";
-              settings = {
-                background = false;
-                clock_style = "analog";
-                color = "on_surface";
-                font_family = "";
-                shadow = true;
-                timezone = "America/New_York";
-              };
-            };
-            "desktop-widget-0000000000000004" = {
-              box_height = 64.0;
-              box_width = 160.0;
-              cx = 1872.0;
-              cy = 464.0;
-              output = "DP-5";
-              placement_height = 1440.0;
-              placement_width = 2560.0;
-              rotation = 0.0;
-              type = "weather";
-              settings = {
-                background = false;
-                shadow = true;
-                show_forecast = false;
-              };
-            };
-          };
-        };
       };
     };
 
@@ -307,7 +224,7 @@
 
   # sddm user account picture
   systemd.tmpfiles.rules = [
-    "f+ /var/lib/AccountsService/users/benjidev 0600 root root - [User]\\nIcon=/var/lib/AccountsService/icons/benjidev\\n"
-    "L+ /var/lib/AccountsService/icons/benjidev - - - - ${../config}/benjidev.png"
+    "f+ /var/lib/AccountsService/users/${config.workstation.user} 0600 root root - [User]\\nIcon=/var/lib/AccountsService/icons/${config.workstation.user}\\n"
+    "L+ /var/lib/AccountsService/icons/${config.workstation.user} - - - - ${../config}/${config.workstation.user}.png"
   ];
 }
