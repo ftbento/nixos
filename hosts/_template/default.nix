@@ -9,6 +9,17 @@
     # firewall, containers) directly in this file — see hosts/argon.
     # users.benjidev              # Primary user account (desktop hosts only):
     #                             # import it here, NOT in the desktop profile.
+    # ../../modules/services/monitoring  # Prometheus monitoring. On a new
+    #                             # server enable:
+    #                             #   services.monitoring.exporter.enable = true;
+    #                             # and add its tailnet name to the hub host's
+    #                             # services.monitoring.server.targets (see argon).
+    # ../../modules/services/dashboard    # Services landing page (Homepage module)
+    #                             # behind nginx on port 80. Define
+    #                             # services.dashboard = { enable = true;
+    #                             #   services = [ ... ]; } — each service can
+    #                             # point at any IP/hostname; non-web services
+    #                             # get an /info/<slug> page via `info`.
   ];
 
   # Global options (allowUnfree, flake settings, ...) come from the core profile.

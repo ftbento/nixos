@@ -23,6 +23,9 @@ picking the right profile(s) rather than copying/replicating config.
 │   │                          #   nh, tailscale, graphics, pipewire, bluetooth,
 │   │                          #   stylix, user, gpu/{amd,nvidia}
 │   ├── software/              #   gaming, flatpak
+│   ├── services/              #   monitoring (Prometheus/Grafana + agents),
+│   │                          #   proxmox (native PVE), dashboard (Homepage
+│   │                          #   service landing page behind nginx)
 │   ├── tweaks/                #   man
 │   └── wm/                    #   hyprland
 ├── home/                      # Home-manager user profiles + shared HM modules
