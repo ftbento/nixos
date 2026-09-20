@@ -4,6 +4,7 @@
     ./fish.nix
     ./git.nix
     ./kitty.nix
+    ./opencode.nix
     ./yazi.nix
   ];
 }

@@ -1,7 +1,5 @@
-{ config, pkgs, lib, inputs, ... }: let
+{ config, pkgs, lib, ... }: let
   username = "benjidev";
-
-  pkgs-unstable = inputs.nixpkgs-unstable.legacyPackages.${pkgs.stdenv.hostPlatform.system};
 in {
   # System-level user creation
   programs.fish.enable = true;
@@ -38,7 +36,6 @@ in {
         bitwarden-desktop
         comma
         unzip
-        pkgs-unstable.opencode
         yt-dlp
         grc
         playerctl
@@ -53,6 +50,7 @@ in {
     xdg.portal.config.common.default = "*";
 
     # Shared user modules with config baked in. Only enable + per-user overrides.
+    home.opencode.enable = true;
     home.fastfetch.enable = true;
     home.yazi.enable = true;
     home.git.enable = true;
