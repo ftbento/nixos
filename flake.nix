@@ -44,7 +44,7 @@
     users = import ./home/users.nix;
     pkgsFor = system: nixpkgs.legacyPackages.${system};
     cop3223cShell = pkgs: agenixCli: pkgs.mkShell {
-      packages = with pkgs; [ gcc13 gnumake gdb valgrind openssh ] ++ [ agenixCli ];
+      packages = with pkgs; [ gcc13 ] ++ [ agenixCli ];
       shellHook = ''
         if [ -d ~/nixos/secrets ]; then
           export COP3223C=$( (cd ~/nixos/secrets && agenix -d cop3223c.age 2>/dev/null) | tr -d '\n')
