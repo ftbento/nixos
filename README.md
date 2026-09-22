@@ -48,7 +48,7 @@ picking the right profile(s) rather than copying/replicating config.
 | Profile     | Applies to            | Contents |
 |-------------|-----------------------|----------|
 | `core.nix`  | Every device          | nix flakes, agenix, home-manager base, nh, tailscale, man, timezone/locale |
-| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland, noctalia, gaming, flatpak, rustdesk, vpn, sddm/qylock, desktop home-manager (lock screen: qylock-lock) |
+| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland/hypridle/hyprlock, noctalia, gaming, flatpak, rustdesk, vpn, sddm/qylock, desktop home-manager (lock screen: hyprlock) |
 
 Each host imports `core.nix` plus the appropriate persona, then the host file
 keeps only what is truly host-specific. Headless servers (like argon) are
@@ -148,4 +148,4 @@ via `modules/core/stylix.nix` (imported by the desktop profile):
 - Colors come from a base16 scheme (`catppuccin-mocha` by default); switch schemes by changing `stylix.base16Scheme` or derive colors from a wallpaper with `stylix.image`.
 - Applies to supported targets automatically: kitty, Hyprland (window borders), GTK/Qt, btop, and more.
 - The custom GRUB theme is preserved (`targets.grub.enable = false`).
-- Hyprland is configured through the Lua API. Lock screen and login screen are themed by qylock (qylock-lock + SDDM), not Stylix.
+- Hyprland is configured through the Lua API. Locks are handled by hyprlock (hypridle after idle, Super+Escape, Noctalia Lock); the SDDM login screen is themed by qylock. Not Stylix.

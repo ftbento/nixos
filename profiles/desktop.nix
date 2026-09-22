@@ -46,7 +46,10 @@
     enable = true;
     theme = "nothing";
     sddm.enable = true;        # install + activate the qylock SDDM login screen
-    quickshell.enable = true;  # qylock-lock used as the after-login lock screen
+    # quickshell lock screen disabled: qylock's "nothing" theme can't unlock
+    # under Quickshell (login gated behind isQuickshell) -> hyprlock is used
+    # for the after-login lock screen instead.
+    quickshell.enable = false;
   };
 
   # Desktop home-manager configuration for the primary user.
@@ -57,7 +60,7 @@
     # that was previously tweaked at runtime (bar layout, launcher, wallpaper,
     # theme, control-center tabs, desktop widgets, ...) now lives here so the
     # declarative file owns the shell. setup_wizard_enabled skips the first-run
-    # wizard. qylock stays the lock screen everywhere (Super+Escape bind AND the
+    # wizard. hyprlock is the lock screen everywhere (Super+Escape bind AND the
     # session-menu Lock action), so Noctalia's own lockscreen is off.
     programs.noctalia = {
       enable = true;
@@ -98,7 +101,7 @@
           session = {
             grid_columns = 2;
             actions = [
-              { action = "lock"; command = "qylock-lock"; }
+              { action = "lock"; command = "hyprlock"; }
               { action = "suspend"; }
               { action = "hibernate"; }
               { action = "logout"; }
@@ -187,7 +190,7 @@
           community_palette = "Oxocarbon";
         };
 
-        # qylock stays the lock screen everywhere (Super+Escape bind AND the
+        # hyprlock is the lock screen everywhere (Super+Escape bind AND the
         # session-menu Lock action), so Noctalia's own lockscreen is off.
         lockscreen.enabled = false;
       };
@@ -203,6 +206,8 @@
     # Desktop-wide settings live in modules/wm/hyprland.lua; the entry requires
     # a per-host host.lua (installed by each host that uses the desktop profile).
     xdg.configFile."hypr/hyprland.lua".source = ../modules/wm/hyprland.lua;
+    xdg.configFile."hypr/hyprlock.conf".source = ../modules/wm/hyprlock.conf;
+    xdg.configFile."hypr/hypridle.conf".source = ../modules/wm/hypridle.conf;
     xdg.configFile."noctalia/nix-snowflake.svg".source = ../config/nix-snowflake.svg;
 
     # Notifications — Noctalia provides the daemon (enable_daemon default true),

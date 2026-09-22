@@ -55,8 +55,8 @@
 
   # Host-specific display state that the desktop profile deliberately keeps out
   # of the shared layer: Hyprland monitor/workspace layout lives in host.lua and
-  # Noctalia wallpapers/widgets live here too. (The lock screen is qylock-lock
-  # everywhere — hyprland.lua Super+Escape + Noctalia session Lock action.)
+#   Noctalia wallpapers/widgets live here too. (The lock screen is hyprlock
+  #   everywhere — hyprland.lua Super+Escape + Noctalia session Lock action.)
   home-manager.users.${config.workstation.user} = {
     xdg.configFile."hypr/host.lua".source = ./hyprland-host.lua;
 

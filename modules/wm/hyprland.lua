@@ -80,7 +80,7 @@ hl.bind("SUPER + SUPER_L", hl.dsp.exec_cmd("noctalia msg panel-toggle control-ce
 -- windows
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + Q",     hl.dsp.window.close())
-hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("qylock-lock"))
+hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + A",     hl.dsp.exec_cmd("pwvucontrol"))
 
 -- screenshots — shared Noctalia policy (save + clipboard) set in
@@ -101,6 +101,8 @@ hl.bind(mainMod .. " + mouse_up",    hl.dsp.layout("move -col"))
 -- Super+Shift+scroll switches workspaces (no numeric workspace binds)
 hl.bind(mainMod .. " + SHIFT + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + SHIFT + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
+-- Super+N creates a brand-new empty workspace and moves to it
+hl.bind(mainMod .. " + N",     hl.dsp.exec_cmd("hyprctl dispatch workspace new"))
 hl.bind(mainMod .. " + SHIFT + h",   hl.dsp.layout("swapcol l"))
 hl.bind(mainMod .. " + SHIFT + l",   hl.dsp.layout("swapcol r"))
 hl.bind(mainMod .. " + SHIFT + k",   hl.dsp.layout("expel"))

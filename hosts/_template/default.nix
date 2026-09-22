@@ -49,8 +49,8 @@
 #       home-manager.users.<user>.xdg.configFile."hypr/host.lua".source = ./hyprland-host.lua;
 #   - Noctalia wallpaper + desktop widgets
 #     (see hosts/radon/default.nix — the desktop profile keeps these out of the
-#     shared layer). The lock screen is qylock-lock everywhere; hyprlock is not
-#     used.
+#     shared layer). The lock screen is hyprlock everywhere (hypridle locks
+#     after idling; qylock is only the SDDM login theme).
 
   # System state version - DO NOT CHANGE this after first install
   system.stateVersion = "26.05"; # CHANGE THIS TO MATCH YOUR NIXOS VERSION
