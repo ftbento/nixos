@@ -1,14 +1,17 @@
 # odysseus — a self-hosted AI workspace (chat, agents, email, research, notes).
 #
-# Upstream ships a multi-service docker compose stack (odysseus + searxng +
-# chromadb + ntfy). We run the *minimal* `odysseus` container only for now and
-# point its LLM provider at LiteLLM on the Docker host (host.docker.internal),
-# so every model alias (daily/smart/tools/ajax/local) fans out from there.
+# Runs upstream's full multi-service docker compose stack (odysseus + searxng +
+# chromadb + ntfy). LiteLLM on the Docker host is the single LLM provider
+# (host.docker.internal), aggregating every model target; Odysseus stores the
+# direct model names and any failover between them is configured by the user in
+# the UI (the app has its own built-in fallback — no proxy-level aliases here).
 #
-# The image is built from a pinned upstream source tree on first service start
-# (`docker compose up -d --build`). Compose layer-caches, so subsequent boots
-# reuse the image unless `rev` changes. The web UI binds to a single address so
-# it stays where you put it — pass the Tailscale IP to keep it tailnet-only.
+# The app image is built from a pinned upstream source tree on first service
+# start (`docker compose up -d --build`). Compose layer-caches, so subsequent
+# boots reuse the image unless `rev` changes. Companion services are pinned to
+# explicit image tags so an upstream `latest` break can't wedge the stack. The
+# web UI binds to a single address (the Tailscale IP keeps it tailnet-only);
+# ntfy is likewise bound to the tailnet, searxng/chromadb stay on loopback.
 
 { config, lib, pkgs, ... }:
 
@@ -26,7 +29,56 @@ let
   # PUID/PGID are resolved at start time (`id -u`/`id -g`) so they always match
   # the allocated system user without depending on eval-phase id assignment.
   dockerCompose = lib.getExe pkgs.docker-compose;
-  composeArgs = "-p odysseus -f ${composeFile}";
+
+  # Upstream's compose is used as-is; this override only adds what we need on
+  # top: a stable container name (the seed unit `docker exec`s it), a tagged
+  # app image, and pinned companion images. Relative bind mounts in the
+  # upstream file (`./config/...`, `./scripts/...`) resolve against the project
+  # directory, which is the directory of the first `-f` file — the pinned
+  # source tree — so they keep working.
+  overrideFile = pkgs.writeText "odysseus-compose.override.yml" ''
+    services:
+      odysseus:
+        container_name: odysseus
+        image: odysseus:local
+        build:
+          context: ${src}
+          args:
+            INSTALL_OPTIONAL: ${lib.boolToString cfg.buildOptional}
+      chromadb:
+        image: ${cfg.chromadbImage}
+      ntfy:
+        image: ${cfg.ntfyImage}
+  '';
+
+  composeArgs = "-p odysseus"
+    + " -f ${src}/docker-compose.yml"
+    + " -f ${overrideFile}";
+
+  # Non-secret compose interpolation vars (fed to the compose process env).
+  # Secrets — OPENAI_API_KEY, ODYSSEUS_ADMIN_PASSWORD, SEARXNG_SECRET — arrive
+  # via EnvironmentFile instead, so they never land in the Nix store.
+  baseEnv = {
+    APP_BIND = cfg.bindAddress;
+    APP_PORT = toString cfg.port;
+    APP_DATA_DIR = "${cfg.dataDir}/data";
+    APP_LOGS_DIR = "${cfg.dataDir}/logs";
+    LLM_HOST = cfg.llmHost;
+    ODYSSEUS_ADMIN_USER = cfg.adminUser;
+    AUTH_ENABLED = lib.boolToString cfg.authEnabled;
+    ALLOWED_ORIGINS = origins;
+    CHROMADB_BIND = cfg.chromadbBind;
+    NTFY_BIND = cfg.ntfyBind;
+    NTFY_BASE_URL = cfg.ntfyBaseUrl;
+    # Cache lives inside the bind-mounted /app/data so fastembed survives a
+    # container recreate.
+    FASTEMBED_CACHE_PATH = "/app/data/fastembed";
+  };
+
+  # Open the ntfy port only when it is bound somewhere other than loopback;
+  # the firewall is interface-agnostic, but nothing listens on the LAN when the
+  # bind is the tailnet address, so this doesn't widen LAN exposure.
+  ntfyBound = !(lib.elem cfg.ntfyBind [ "127.0.0.1" "::1" "" ]);
 
   # A non-wildcard bind address (e.g. a Tailscale IP) may not exist yet when
   # Docker auto-starts the container at boot; the port mapping is then silently
@@ -52,6 +104,9 @@ let
   upScript = pkgs.writeShellScript "odysseus-up" ''
     export PUID="$(id -u '${cfg.user}')"
     export PGID="$(id -g '${cfg.group}')"
+    # The agenix file exposes LITELLM_MASTER_KEY; upstream's compose wants it
+    # as OPENAI_API_KEY. Map it here so the secret stays out of the store.
+    export OPENAI_API_KEY="''${LITELLM_MASTER_KEY:-}"
     ${lib.optionalString cfg.waitForBindAddress waitForBind}
     exec ${dockerCompose} ${composeArgs} up -d --build --force-recreate
   '';
@@ -131,39 +186,6 @@ let
     + "\n"
   );
 
-  # Minimal compose: just the app. `OPENAI_API_KEY` is pulled from the
-  # `LITELLM_MASTER_KEY` env var (fed in via EnvironmentFile, never written to
-  # the store); `ODYSSEUS_ADMIN_PASSWORD` is passed straight through from the
-  # same mechanism.
-  composeFile = pkgs.writeText "odysseus-compose.yml" ''
-    services:
-      odysseus:
-        build:
-          context: ${src}
-        image: odysseus:local
-        container_name: odysseus
-        ports:
-          - "${cfg.bindAddress}:${toString cfg.port}:7000"
-        volumes:
-          - ${cfg.dataDir}/data:/app/data
-          - ${cfg.dataDir}/logs:/app/logs
-        extra_hosts:
-          - "host.docker.internal:host-gateway"
-        environment:
-          - LLM_HOST=${cfg.llmHost}
-          - OPENAI_API_KEY=''${LITELLM_MASTER_KEY}
-          - AUTH_ENABLED=${lib.boolToString cfg.authEnabled}
-          - LOCALHOST_BYPASS=false
-          - ODYSSEUS_ADMIN_USER=${cfg.adminUser}
-          - ODYSSEUS_ADMIN_PASSWORD
-          - ALLOWED_ORIGINS=${origins}
-          - PUID=''${PUID}
-          - PGID=''${PGID}
-          - SEARXNG_INSTANCE=
-          - CHROMADB_HOST=
-          - CHROMADB_PORT=
-        restart: unless-stopped
-  '';
 in
 {
   options.services.odysseus = {
@@ -207,8 +229,70 @@ in
       type = lib.types.bool;
       default = true;
       description = ''
-        Open {option}`port`. Harmless when {option}`bindAddress` is a tailnet
-        address (nothing listens on the LAN), and required if it is not.
+        Open {option}`port` (and {option}`ntfyPort` when ntfy is bound off
+        loopback). Harmless when the bind address is a tailnet address (nothing
+        listens on the LAN), and required if it is not.
+      '';
+    };
+
+    searxngSecretFile = lib.mkOption {
+      type = lib.types.path;
+      description = ''
+        EnvironmentFile with `SEARXNG_SECRET=...`, substituted into SearXNG's
+        `settings.yml` by the container entrypoint. Point at an agenix secret.
+      '';
+    };
+
+    chromadbBind = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1";
+      description = "Host address ChromaDB's port is published on (loopback by default).";
+    };
+
+    ntfyBind = lib.mkOption {
+      type = lib.types.str;
+      default = "127.0.0.1";
+      description = ''
+        Host address ntfy's port is published on. Set to the Tailscale IP for
+        phone push over the tailnet.
+      '';
+    };
+
+    ntfyPort = lib.mkOption {
+      type = lib.types.port;
+      default = 8091;
+      description = "Host port ntfy is published on.";
+    };
+
+    ntfyBaseUrl = lib.mkOption {
+      type = lib.types.str;
+      default = "http://localhost:8091";
+      description = ''
+        Public base URL ntfy advertises (set to `http://<tailscale-ip>:<port>`
+        when {option}`ntfyBind` is the tailnet address). Only affects the URL
+        shown in-topic, not where ntfy listens.
+      '';
+    };
+
+    chromadbImage = lib.mkOption {
+      type = lib.types.str;
+      default = "docker.io/chromadb/chroma:1.5.9";
+      description = "Pinned ChromaDB image (avoid an untested `latest`).";
+    };
+
+    ntfyImage = lib.mkOption {
+      type = lib.types.str;
+      default = "docker.io/binwiederhier/ntfy:v2.30.0";
+      description = "Pinned ntfy image (avoid an untested `latest`).";
+    };
+
+    buildOptional = lib.mkOption {
+      type = lib.types.bool;
+      default = false;
+      description = ''
+        Build the app image with upstream's optional dependencies
+        (`INSTALL_OPTIONAL`). Off keeps the image slim; turn on only when a
+        Cookbook feature needs them.
       '';
     };
 
@@ -318,6 +402,12 @@ in
       "d ${cfg.dataDir} 0750 ${cfg.user} ${cfg.group} -"
       "d ${cfg.dataDir}/data 0750 ${cfg.user} ${cfg.group} -"
       "d ${cfg.dataDir}/logs 0750 ${cfg.user} ${cfg.group} -"
+      # Upstream mounts these from under the data dir; create them up front so
+      # Docker doesn't create root-owned dirs on first start.
+      "d ${cfg.dataDir}/data/ssh 0750 ${cfg.user} ${cfg.group} -"
+      "d ${cfg.dataDir}/data/huggingface 0750 ${cfg.user} ${cfg.group} -"
+      "d ${cfg.dataDir}/data/local 0750 ${cfg.user} ${cfg.group} -"
+      "d ${cfg.dataDir}/data/fastembed 0750 ${cfg.user} ${cfg.group} -"
     ];
 
     systemd.services.odysseus = {
@@ -326,11 +416,11 @@ in
       wants = [ "network-online.target" ];
       after = [ "docker.service" "network-online.target" ];
       requires = [ "docker.service" ];
-      environment = cfg.extraEnvironment;
+      environment = baseEnv // cfg.extraEnvironment;
       serviceConfig = {
         Type = "oneshot";
         RemainAfterExit = true;
-        EnvironmentFile = [ cfg.apiKeyFile cfg.adminPasswordFile ];
+        EnvironmentFile = [ cfg.apiKeyFile cfg.adminPasswordFile cfg.searxngSecretFile ];
         WorkingDirectory = cfg.dataDir;
         ExecStart = upScript;
         ExecStop = downScript;
@@ -355,6 +445,8 @@ in
       };
     };
 
-    networking.firewall.allowedTCPPorts = lib.mkIf cfg.openFirewall [ cfg.port ];
+    networking.firewall.allowedTCPPorts =
+      lib.optional cfg.openFirewall cfg.port
+      ++ lib.optional (cfg.openFirewall && ntfyBound) cfg.ntfyPort;
   };
 }

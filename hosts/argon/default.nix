@@ -113,17 +113,13 @@ in
     "d /var/lib/llama/models 0750 llama-swap llama-swap -"
   ];
 
-  # --- LiteLLM (model router + priority failover) --------------------------
-  # One OpenAI-compatible endpoint for the house, with two kinds of entries:
-  #   * direct models  -> radon only, exposed under their real upstream names
-  #     (no alias, no fallback; if radon is off they just error).
-  #   * automation aliases -> radon primary with an argon qwen3.5-4b fallback,
-  #     created one-per-automation (email, ...). `order` gives the priority
-  #     failover; the cooldown keeps a failed radon marked-down for a while so
-  #     we don't re-probe it on every request. Background health checks are
-  #     deliberately left off on the argon rows — they would load the lazy local
-  #     model and immediately unload it again (the per-deployment disable flag
-  #     also keeps on-demand /health cheap).
+  # --- LiteLLM (model aggregator) ------------------------------------------
+  # One OpenAI-compatible endpoint that gathers every model target under its
+  # real upstream name — no aliases, no proxy-level failover. Odysseus points
+  # here for all models; any failover between them is configured by the user in
+  # Odysseus's own UI. Background health checks are left off on the argon row:
+  # they would load the lazy local 4B model and immediately unload it again (the
+  # per-deployment disable flag also keeps on-demand /health cheap).
   services.litellm = {
     enable = true;
     host = "0.0.0.0"; # Odysseus runs in Docker and must reach the host
@@ -131,7 +127,7 @@ in
     environmentFile = config.age.secrets.litellm-master-key.path;
     settings = {
       model_list = [
-        # --- Direct models: radon only, real names, no alias/fallback ---
+        # --- radon (Vulkan GPU) ---
         {
           model_name = "gpt-oss-20b";
           litellm_params = { model = "openai/gpt-oss-20b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; };
@@ -148,18 +144,13 @@ in
           litellm_params = { model = "openai/qwen3.5-9b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; };
           model_info = { id = "qwen3.5-9b-radon"; };
         }
-        # --- Automation aliases: radon first, argon qwen3.5-4b fallback ---
-        # email: read/summarize/draft/classify — fast + strong instruction
-        # following beats raw size for high-frequency automation.
+        # --- argon (CPU) ---
+        # Exposed under its real name so it can be wired as a fallback target
+        # for any radon model in Odysseus's per-user fallback UI.
         {
-          model_name = "email";
-          litellm_params = { model = "openai/gpt-oss-20b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; order = 1; };
-          model_info = { id = "email-radon"; };
-        }
-        {
-          model_name = "email";
-          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; order = 2; };
-          model_info = { id = "email-argon"; disable_background_health_check = true; };
+          model_name = "qwen3.5-4b";
+          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; };
+          model_info = { id = "qwen3.5-4b-argon"; disable_background_health_check = true; };
         }
       ];
       general_settings = {
@@ -169,20 +160,21 @@ in
         drop_params = true;     # llama-server rejects unknown OpenAI params
         request_timeout = 600;  # allow for a cold model load on radon
       };
+      # Each model is a single deployment, so there is nothing to fail over to
+      # at this layer (order/cooldown would be inert). Odysseus owns fallback.
       router_settings = {
-        routing_strategy = "simple-shuffle";
-        num_retries = 0;        # fail over to the next order tier immediately
-        allowed_fails = 1;
-        cooldown_time = 120;    # keep radon marked-down for 2 min after a failure
+        num_retries = 0;
       };
     };
   };
 
   # --- Odysseus (self-hosted AI workspace) ---
-  # Minimal stack (just the app container) built from a pinned upstream rev and
-  # bound to the Tailscale IP so it never lands on the LAN. Its LLM provider
-  # points at LiteLLM on the host (host.docker.internal:4000) using the master
-  # key, so every model alias is governed by the same failover rules.
+  # Full upstream stack (odysseus + searxng + chromadb + ntfy), built from a
+  # pinned upstream rev. The UI is bound to the Tailscale IP so it never lands
+  # on the LAN; ntfy is likewise tailnet-only, while searxng/chromadb stay on
+  # loopback. Its LLM provider points at LiteLLM on the host
+  # (host.docker.internal:4000) using the master key; all model targets are
+  # direct names and any fallback is configured in Odysseus itself.
   services.odysseus = {
     enable = true;
     bindAddress = "100.97.118.91"; # tailnet-only
@@ -192,6 +184,10 @@ in
     ];
     apiKeyFile = config.age.secrets.litellm-master-key.path;
     adminPasswordFile = config.age.secrets.odysseus-admin-password.path;
+    searxngSecretFile = config.age.secrets.searxng-secret.path;
+    # ntfy over the tailnet so phones can subscribe without LAN exposure.
+    ntfyBind = "100.97.118.91";
+    ntfyBaseUrl = "http://100.97.118.91:8091";
     # Seed the LiteLLM proxy as an LLM provider (avoids the manual Settings
     # dance; endpoint discovery can't find :4000 on its own).
     seedEndpoints = [
@@ -235,6 +231,14 @@ in
       # `ODYSSEUS_ADMIN_PASSWORD=...` — seeds the first Odysseus admin login.
       # Read by systemd (root) as the odysseus unit's EnvironmentFile.
       file = ../../secrets/odysseus-admin-password.age;
+      owner = "root";
+      mode = "0400";
+    };
+    searxng-secret = {
+      # `SEARXNG_SECRET=...` — substituted into SearXNG's settings.yml by the
+      # container entrypoint. Read by systemd (root) as the odysseus unit's
+      # EnvironmentFile and interpolated into the compose environment.
+      file = ../../secrets/searxng-secret.age;
       owner = "root";
       mode = "0400";
     };
@@ -412,19 +416,19 @@ in
       {
         group = "AI";
         name = "LiteLLM";
-        description = "Model alias proxy with radon -> argon failover";
+        description = "Aggregated OpenAI-compatible model endpoint";
         icon = "mdi-brain";
         siteMonitor = "http://127.0.0.1:4000/health/liveliness";
         info = ''
           LiteLLM is the OpenAI-compatible proxy every client should talk to.
-          Direct models point at radon under their real names (no fallback);
-          automation aliases fall back to argon when radon is off:
+          Every model target is exposed under its real upstream name — no
+          aliases and no proxy-level failover. Fallback between models is
+          configured in Odysseus's own UI.
 
-            gpt-oss-20b      -> GPT-OSS 20B (radon only)
-            qwen3.6-35b-a3b  -> Qwen3.6 35B-A3B (radon only)
-            qwen3.5-9b       -> Qwen3.5 9B (radon only; Ajax stand-in)
-
-            email            -> GPT-OSS 20B (radon), else qwen3.5-4b (argon)
+            gpt-oss-20b      -> GPT-OSS 20B (radon GPU)
+            qwen3.6-35b-a3b  -> Qwen3.6 35B-A3B (radon GPU)
+            qwen3.5-9b       -> Qwen3.5 9B (radon GPU; Ajax stand-in)
+            qwen3.5-4b       -> Qwen3.5 4B (argon CPU; fallback target)
 
           Endpoint: http://10.8.90.205:4000/v1 (LAN only; :4000 is not
           reachable over the tailnet). Authenticate with the master key:
@@ -438,6 +442,55 @@ in
 
           Odysseus already points here; any other OpenAI-compatible client
           (Continue, aider, ...) can too.
+        '';
+      }
+      {
+        group = "AI";
+        name = "SearXNG";
+        description = "Private web search + Deep Research backend";
+        icon = "mdi-magnify";
+        siteMonitor = "http://127.0.0.1:8080/";
+        info = ''
+          SearXNG backs Odysseus web search and Deep Research. It listens on
+          loopback (127.0.0.1:8080) and is reached in-network as
+          http://searxng:8080; it is not exposed on the LAN or tailnet.
+
+          The instance secret is replaced into settings.yml on first boot from
+          the searxng-secret agenix secret.
+        '';
+      }
+      {
+        group = "AI";
+        name = "ChromaDB";
+        description = "Vector store for Odysseus memory/RAG";
+        icon = "mdi-database";
+        siteMonitor = "http://127.0.0.1:8100/api/v2/heartbeat";
+        info = ''
+          ChromaDB stores Odysseus embeddings for memory and retrieval.
+          Loopback-only (127.0.0.1:8100); reached in-network as
+          http://chromadb:8000. Data lives in the `odysseus_chromadb-data`
+          Docker volume.
+
+          Embeddings are generated locally with fastembed (no external API).
+        '';
+      }
+      {
+        group = "AI";
+        name = "ntfy";
+        description = "Push notifications (tailnet-only)";
+        icon = "mdi-bell";
+        siteMonitor = "http://100.97.118.91:8091/v1/health";
+        info = ''
+          ntfy delivers push notifications to phones/browsers. It is bound to
+          the tailnet at http://100.97.118.91:8091 (no auth — tailnet members
+          only).
+
+          Subscribe in the ntfy app to a topic, e.g.:
+
+            http://100.97.118.91:8091/odysseus
+
+          Odysseus's notification integration points at the in-network name
+          http://ntfy:80.
         '';
       }
     ];
