@@ -86,7 +86,10 @@ in
         };
         "qwen3.6-35b-a3b" = {
           name = "Qwen3.6 35B A3B (smart)";
-          cmd = serveModel { file = "Qwen3.6-35B-A3B-UD-IQ3_XXS.gguf"; ctx = 4096; };
+          # Thinking off: otherwise it can spend the whole context budget on
+          # invisible reasoning and return empty; the larger ctx gives Odysseus
+          # room when it injects memory/context into the prompt.
+          cmd = serveModel { file = "Qwen3.6-35B-A3B-UD-IQ3_XXS.gguf"; ctx = 8192; } + " --reasoning off";
           aliases = [ "smart" ];
         };
         "qwen3.5-9b" = {
