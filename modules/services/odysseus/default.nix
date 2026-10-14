@@ -27,10 +27,33 @@ let
   # the allocated system user without depending on eval-phase id assignment.
   dockerCompose = lib.getExe pkgs.docker-compose;
   composeArgs = "-p odysseus -f ${composeFile}";
+
+  # A non-wildcard bind address (e.g. a Tailscale IP) may not exist yet when
+  # Docker auto-starts the container at boot; the port mapping is then silently
+  # dropped and `compose up` won't reconcile it. Wait for the address, then
+  # force-recreate so the mapping is applied for real.
+  waitForBind = ''
+    addr=${lib.escapeShellArg cfg.bindAddress}
+    case "$addr" in
+      0.0.0.0 | 127.0.0.1 | "") : ;;
+      *)
+        n=0
+        while [ "$n" -lt 60 ]; do
+          if ${lib.getExe' pkgs.iproute2 "ip"} -o addr show 2>/dev/null | grep -q "inet $addr/"; then
+            break
+          fi
+          ${lib.getExe' pkgs.coreutils "sleep"} 2
+          n=$((n + 1))
+        done
+        ;;
+    esac
+  '';
+
   upScript = pkgs.writeShellScript "odysseus-up" ''
     export PUID="$(id -u '${cfg.user}')"
     export PGID="$(id -g '${cfg.group}')"
-    exec ${dockerCompose} ${composeArgs} up -d --build
+    ${lib.optionalString cfg.waitForBindAddress waitForBind}
+    exec ${dockerCompose} ${composeArgs} up -d --build --force-recreate
   '';
   downScript = pkgs.writeShellScript "odysseus-down" ''
     exec ${dockerCompose} ${composeArgs} down
@@ -159,6 +182,16 @@ in
       type = lib.types.str;
       default = "127.0.0.1";
       description = "Address the web UI binds to (e.g. the Tailscale IP).";
+    };
+
+    waitForBindAddress = lib.mkOption {
+      type = lib.types.bool;
+      default = true;
+      description = ''
+        Before `docker compose up`, wait for {option}`bindAddress` to exist on a
+        local interface. Prevents the container from coming up without its port
+        mapping when the address (e.g. a Tailscale IP) isn't ready at boot.
+      '';
     };
 
     port = lib.mkOption {
