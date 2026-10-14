@@ -33,7 +33,7 @@ hl.config({
     input = {
         kb_layout   = "us",
         kb_options  = "caps:super",
-        sensitivity = -0.25,
+        sensitivity = -0.1,
         follow_mouse = 0,
     },
     cursor = {
@@ -82,6 +82,11 @@ hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
 hl.bind(mainMod .. " + Q",     hl.dsp.window.close())
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("hyprlock"))
 hl.bind(mainMod .. " + A",     hl.dsp.exec_cmd("pwvucontrol"))
+-- F11 toggles compositor fullscreen; games like Minecraft ignore their own
+-- fullscreen request when launched from Prism, so force it from Hyprland.
+-- layout_aware defaults to true: the scrolling layout's FS handler is used,
+-- so you can scroll away from a fullscreen window without un-fullscreening it.
+hl.bind("F11", hl.dsp.window.fullscreen({ mode = "fullscreen" }))
 
 -- screenshots — shared Noctalia policy (save + clipboard) set in
 -- profiles/desktop.nix. SUPER+Print runs the capture through the annotation
@@ -101,8 +106,9 @@ hl.bind(mainMod .. " + mouse_up",    hl.dsp.layout("move -col"))
 -- Super+Shift+scroll switches workspaces (no numeric workspace binds)
 hl.bind(mainMod .. " + SHIFT + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + SHIFT + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
--- Super+N creates a brand-new empty workspace and moves to it
-hl.bind(mainMod .. " + N",     hl.dsp.exec_cmd("hyprctl dispatch workspace new"))
+-- Super+N jumps to a fresh workspace: `empty` (= first available empty
+-- workspace; "workspace new" is not a valid Hyprland selector).
+hl.bind(mainMod .. " + N",     hl.dsp.focus({ workspace = "empty" }))
 hl.bind(mainMod .. " + SHIFT + h",   hl.dsp.layout("swapcol l"))
 hl.bind(mainMod .. " + SHIFT + l",   hl.dsp.layout("swapcol r"))
 hl.bind(mainMod .. " + SHIFT + k",   hl.dsp.layout("expel"))
@@ -142,5 +148,6 @@ hl.window_rule({
 -- autostart (desktop-wide)
 hl.on("hyprland.start", function()
     hl.exec_cmd("noctalia")
+    hl.exec_cmd("netbird-ui")
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 24")
 end)

@@ -22,7 +22,8 @@ picking the right profile(s) rather than copying/replicating config.
 │   ├── core/                  #   core, nix, systemd, agenix, home-manager,
 │   │                          #   nh, tailscale, graphics, pipewire, bluetooth,
 │   │                          #   stylix, user, gpu/{amd,nvidia}
-│   ├── software/              #   gaming, flatpak
+│   ├── software/              #   gaming, flatpak, rustdesk, vpn, netbird,
+│   │                          #   localsend, prismlauncher
 │   ├── services/              #   monitoring (Prometheus/Grafana + agents),
 │   │                          #   proxmox (native PVE), dashboard (Homepage
 │   │                          #   service landing page behind nginx)
@@ -48,7 +49,7 @@ picking the right profile(s) rather than copying/replicating config.
 | Profile     | Applies to            | Contents |
 |-------------|-----------------------|----------|
 | `core.nix`  | Every device          | nix flakes, agenix, home-manager base, nh, tailscale, man, timezone/locale |
-| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland/hypridle/hyprlock, noctalia, gaming, flatpak, rustdesk, vpn, sddm/qylock, desktop home-manager (lock screen: hyprlock) |
+| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland/hypridle/hyprlock, noctalia, gaming, flatpak, rustdesk, vpn, netbird, localsend, sddm/qylock, desktop home-manager (lock screen: hyprlock) |
 
 Each host imports `core.nix` plus the appropriate persona, then the host file
 keeps only what is truly host-specific. Headless servers (like argon) are

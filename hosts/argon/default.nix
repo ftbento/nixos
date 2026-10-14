@@ -206,11 +206,20 @@ let
   };
 
   rackpeekYaml = (pkgs.formats.yaml {}).generate "config.yaml" rackpeekSpec;
+
+  # --- Local LLM fallback (CPU, AVX2) ---
+  # argon's always-on fallback for LiteLLM when radon is off. Built from
+  # pkgs.llama-cpp-avx2 (modules/services/ai/llama-cpp-avx2.nix) so the 3400G
+  # gets AVX2/FMA instead of the baseline SSE2 default; -t 4 = physical cores.
+  llamaServer = lib.getExe' pkgs.llama-cpp-avx2 "llama-server";
+  modelsDir = "/var/lib/llama/models";
 in
 {
   imports = [
     ./hardware-configuration.nix
     ../../profiles/core.nix
+    ../../modules/services/ai/llama-cpp-avx2.nix
+    ../../modules/services/ai/llama-swap.nix
     ../../modules/services/monitoring
     ../../modules/services/proxmox
     ../../modules/services/dashboard
@@ -238,6 +247,48 @@ in
   };
   networking.defaultGateway = "10.8.90.1";
   networking.nameservers = [ "1.1.1.1" "8.8.8.8" ];
+
+  # --- Swap (6 GB swapfile) ---
+  # argon shipped with no swap; a 6 GB file gives the LLM + Odysseus stack
+  # headroom. Declared here so it is created/reapplied on every boot.
+  swapDevices = [
+    { device = "/var/lib/llama/swapfile"; size = 6144; }
+  ];
+
+  # --- Local LLM fallback (llama-swap on CPU) ---
+  # Loopback-only: LiteLLM runs on this host and proxies here when radon is
+  # unreachable, so no firewall opening is needed. Lazy load (ttl 600s) keeps
+  # the ~4.6 GB out of RAM while radon is up (the common case).
+  services.llamaSwap = {
+    enable = true;
+    listenAddress = "127.0.0.1";
+    port = 9101;
+    extraGroups = [ ]; # CPU-only build: no GPU device nodes required
+    settings = {
+      healthCheckTimeout = 120;
+      logLevel = "info";
+      logToStdout = "proxy";
+      globalTTL = 600;
+      startPort = 10101;
+      models."qwen3.5-4b" = {
+        name = "Qwen3.5 4B (local fallback)";
+        cmd = lib.concatStringsSep " " [
+          llamaServer
+          "--model ${modelsDir}/Qwen_Qwen3.5-4B-Q4_K_M.gguf"
+          "--port \${PORT}"
+          "--threads 4"
+          "--ctx-size 8192"
+          "--jinja"
+          "--no-webui"
+        ];
+      };
+    };
+  };
+
+  # GGUF weights directory, owned by the service user so llama-swap can read.
+  systemd.tmpfiles.rules = [
+    "d /var/lib/llama/models 0750 llama-swap llama-swap -"
+  ];
 
   programs.git = {
     enable = true;

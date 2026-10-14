@@ -55,6 +55,7 @@ in {
     xdg.portal.config.common.default = "*";
 
     # Shared user modules with config baked in. Only enable + per-user overrides.
+    home.appimage.enable = true;
     home.fastfetch.enable = true;
     home.yazi.enable = true;
     home.git = {

@@ -16,6 +16,8 @@
     ../modules/software/flatpak.nix
     ../modules/software/rustdesk.nix
     ../modules/software/vpn.nix
+    ../modules/software/netbird.nix
+    ../modules/software/localsend.nix
     inputs.qylock.nixosModules.default
   ];
 
@@ -115,11 +117,12 @@
           };
         };
 
-        # The bar is three separate capsule "bubbles" rather than one continuous
-        # strip: transparent bar background, so only the capsule groups are
-        # visible, spread across the full width via margin_ends = 0. layer stays
-        # "top" (the default), so the bar is already hidden beneath fullscreen
-        # apps. Layout: (notifications workspaces) | (control center) |
+        # The bar is four capsule "bubbles" rather than one continuous strip:
+        # transparent bar background, so only the capsule groups are visible,
+        # spread across the full width via margin_ends = 0. layer stays "top"
+        # (the default), so the bar is already hidden beneath fullscreen apps.
+        # Each capsule gets a surface_variant fill from the settings window.
+        # Layout: (notifications workspaces date) | (control center) |
         # (tray) (volume battery session).
         bar.main = {
           position = "top";
@@ -128,14 +131,57 @@
           start  = [ "group:start" ];
           center = [ "group:center" ];
           end    = [ "group:end" "group:end2" ];
+
           capsule_group = [
-            { id = "start";  members = [ "notifications" "workspaces" ]; padding = 12; }
-            { id = "center"; members = [ "control-center" ]; padding = 12; }
-            { id = "end";    members = [ "tray" ]; padding = 12; }
-            { id = "end2";   members = [ "volume" "battery" "session" ]; padding = 12; }
+            {
+              id = "start";
+              members = [ "notifications" "workspaces" "date" ];
+              padding = 12.0;
+              fill = "surface_variant";
+              opacity = 1.0;
+              accordion = false;
+              accordion_direction = "end";
+              enabled = true;
+            }
+            {
+              id = "center";
+              members = [ "control-center" ];
+              padding = 12.0;
+              fill = "surface_variant";
+              opacity = 1.0;
+              accordion = false;
+              accordion_direction = "end";
+              enabled = true;
+            }
+            {
+              id = "end";
+              members = [ "tray" ];
+              padding = 12.0;
+              fill = "surface_variant";
+              opacity = 1.0;
+              accordion = false;
+              accordion_direction = "end";
+              enabled = true;
+            }
+            {
+              id = "end2";
+              members = [ "volume" "battery" "session" ];
+              padding = 12.0;
+              fill = "surface_variant";
+              opacity = 1.0;
+              accordion = false;
+              accordion_direction = "end";
+              enabled = true;
+            }
           ];
         };
         widget.volume.show_label = false;
+        # Bar clock ("date" widget in the start capsule): month/day plus 12-hour
+        # time, e.g. "Oct 14 | 3:07".
+        widget.date = {
+          anchor = true;
+          format = "{:%b %d | %-I:%M}";
+        };
         # Center control-center widget: Nix logo instead of the Noctalia glyph,
         # tinted with the widget color like the other bar icons.
         widget."control-center" = {

@@ -13,6 +13,8 @@ let
     nhupdate = "nix flake update --flake ~/nixos && nh os switch  ~/nixos";
     nhclean = "nh clean all --keep-since 4d --keep 3";
     nhlist = "nixos-rebuild list-generations";
+    nhpall = "nhupdate && nhtest";
+    nhall = "nhswitch && nhclean";
     ff = "fastfetch";
     ".." = "cd ..";
   };

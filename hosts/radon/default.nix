@@ -1,17 +1,118 @@
 # radon — personal workstation
 
-{ config, pkgs, inputs, users, ... }:
+{ config, lib, pkgs, inputs, users, ... }:
+
+let
+  # --- Local LLM serving (llama-swap on Vulkan) ---------------------------------
+  # The three GGUFs live in /var/lib/llama/models (moved there from the
+  # bake-off downloads). -ngl 999 offloads every layer to the RX 9070; --jinja
+  # enables the model's own chat template (needed for tool calling).
+  llamaServer = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
+  modelsDir = "/var/lib/llama/models";
+  serveModel = { file, ctx }: lib.concatStringsSep " " [
+    llamaServer
+    "--model ${modelsDir}/${file}"
+    "--port \${PORT}"          # llama-swap substitutes ${PORT} (startPort+)
+    "--ctx-size ${toString ctx}"
+    "--n-gpu-layers 999"
+    "--jinja"
+    "--no-webui"
+  ];
+in
 {
   imports = [
     ./hardware-configuration.nix
     ../../profiles/core.nix
     ../../profiles/desktop.nix
     ../../modules/core/gpu/amd.nix  # host-specific GPU driver
+    ../../modules/software/prismlauncher.nix  # Prism Launcher (GTNH single-player)
+    ../../modules/services/ai/llama-swap.nix  # on-demand LLM serving for LiteLLM
     users.benjidev                  # primary user account (home/benjidev.nix)
   ];
 
   networking.hostName = "radon";
   workstation.user = "benjidev";
+
+  # --- Static LAN IP on ethernet -------------------------------------------
+  # radon talks to argon (the always-on LiteLLM/Odysseus host) over the LAN,
+  # so it needs a stable address: 10.8.90.228. NetworkManager is already
+  # enabled by the desktop profile, so the profile is declared the NM way.
+  # The DHCP wifi (wlo1) is left completely alone as an ignored failover;
+  # `autoconnect-priority` makes this wired profile win over the auto-created
+  # "Wired connection 1" NM keeps around.
+  networking.networkmanager.ensureProfiles.profiles.wired-enp8s0 = {
+    connection = {
+      id = "wired-enp8s0";
+      type = "ethernet";
+      interface-name = "enp8s0";
+      autoconnect = true;
+      autoconnect-priority = 100;
+    };
+    ipv4 = {
+      method = "manual";
+      address1 = "10.8.90.228/24,10.8.90.1";
+      dns = "1.1.1.1;8.8.8.8;";
+      dns-search = "";
+      route-metric = 100;
+    };
+    ipv6 = {
+      method = "auto";
+      addr-gen-mode = "stable-privacy";
+      dns-search = "";
+    };
+  };
+
+  # --- Local LLM serving (llama-swap + Vulkan) -----------------------------
+  # Exposed to LiteLLM on argon at http://10.8.90.228:9100/v1. Models are
+  # lazily loaded and unloaded 10 minutes after the last request (ttl) so the
+  # GPU is free for gaming. Reached over the LAN only — see the firewall rule
+  # below — never over the tailnet.
+  services.llamaSwap = {
+    enable = true;
+    listenAddress = "0.0.0.0";
+    port = 9100;
+    settings = {
+      healthCheckTimeout = 300; # allow time for a cold 35B load
+      logLevel = "info";
+      logToStdout = "proxy";
+      globalTTL = 600;
+      startPort = 10001;
+      includeAliasesInList = true;
+      models = {
+        "gpt-oss-20b" = {
+          name = "GPT-OSS 20B (daily)";
+          cmd = serveModel { file = "gpt-oss-20b-MXFP4.gguf"; ctx = 8192; };
+          aliases = [ "daily" ];
+        };
+        "qwen3.6-35b-a3b" = {
+          name = "Qwen3.6 35B A3B (smart)";
+          cmd = serveModel { file = "Qwen3.6-35B-A3B-UD-IQ3_XXS.gguf"; ctx = 4096; };
+          aliases = [ "smart" ];
+        };
+        "qwen3.5-9b" = {
+          name = "Qwen3.5 9B (tools / ajax placeholder)";
+          cmd = serveModel { file = "Qwen3.5-9B-Q4_K_M.gguf"; ctx = 16384; };
+          aliases = [ "tools" "ajax" ];
+        };
+      };
+    };
+  };
+
+  # llama-swap is reachable only from argon (10.8.90.205) on the LAN.
+  # radon's firewall uses the iptables backend, so this is a raw rule in the
+  # nixos-fw chain (extraStopCommands removes it again on firewall restart).
+  networking.firewall.extraCommands = ''
+    iptables -A nixos-fw -p tcp -s 10.8.90.205 --dport 9100 -j nixos-fw-accept
+  '';
+  networking.firewall.extraStopCommands = ''
+    iptables -D nixos-fw -p tcp -s 10.8.90.205 --dport 9100 -j nixos-fw-accept 2>/dev/null || true
+  '';
+
+  # The GGUF weights live here (moved out of the volatile /tmp download dir);
+  # created owned by the service user so llama-swap can read them.
+  systemd.tmpfiles.rules = [
+    "d /var/lib/llama/models 0750 llama-swap llama-swap -"
+  ];
 
   # Auto-mount data drives (mounted by systemd at boot; nofail = won't block boot if absent)
   fileSystems."/mnt/games" = {
@@ -31,6 +132,15 @@
     fsType = "ext4";
     options = [ "nofail" "ro" "noatime" ]; # read-only so NixOS never writes to Zorin's root
   };
+
+  # Run AppImages directly via binfmt_misc
+  programs.appimage = {
+    enable = true;
+    binfmt = true;
+  };
+
+  # Run dynamically-linked, non-Nix binaries (e.g. prebuilt game servers/tools)
+  programs.nix-ld.enable = true;
 
   # Host-specific system packages
   environment.systemPackages = with pkgs; [
