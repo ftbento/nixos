@@ -81,7 +81,11 @@ in
       models = {
         "gpt-oss-20b" = {
           name = "GPT-OSS 20B (daily)";
-          cmd = serveModel { file = "gpt-oss-20b-MXFP4.gguf"; ctx = 8192; };
+          # gpt-oss is used for Deep Research, where the accumulated inputs
+          # (plan + search results + findings) can exceed 8k tokens even on the
+          # first probe; 16k leaves enough headroom on the 16GB GPU. Retry with
+          # a smaller size if the GPU runs out of memory.
+          cmd = serveModel { file = "gpt-oss-20b-MXFP4.gguf"; ctx = 16384; };
           aliases = [ "daily" ];
         };
         "qwen3.6-35b-a3b" = {
