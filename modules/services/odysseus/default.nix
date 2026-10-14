@@ -36,6 +36,75 @@ let
     exec ${dockerCompose} ${composeArgs} down
   '';
 
+  # Idempotent, by base_url. Runs inside the container (only place with both
+  # the app's Fernet key at data/.app_key and the cryptography package), so the
+  # API key gets encrypted through the app's own ORM — a raw sqlite insert would
+  # store plaintext the app can't read. Also primes `cached_models` since
+  # proxy-kind endpoints don't auto-refresh.
+  seedPy = pkgs.writeText "odysseus-seed-endpoints.py" ''
+    import json
+    import os
+    import sys
+    import time
+    import uuid
+
+    url = os.environ["ODYSSEUS_EP_URL"]
+    name = os.environ["ODYSSEUS_EP_NAME"]
+    key = os.environ.get(os.environ.get("ODYSSEUS_EP_KEYENV", ""), "")
+
+    last = None
+    for attempt in range(100):
+        try:
+            from core.database import ModelEndpoint, SessionLocal
+
+            db = SessionLocal()
+            try:
+                ep = db.query(ModelEndpoint).filter(ModelEndpoint.base_url == url).first()
+                if ep is None:
+                    ep = ModelEndpoint(
+                        id=str(uuid.uuid4())[:8],
+                        name=name,
+                        base_url=url,
+                        api_key=key,
+                        is_enabled=True,
+                    )
+                    db.add(ep)
+                if not ep.cached_models:
+                    try:
+                        from routes.model_routes import _normalize_base, _probe_endpoint
+
+                        models = _probe_endpoint(_normalize_base(url), key, timeout=20)
+                        if models:
+                            ep.cached_models = json.dumps(models)
+                    except Exception as exc:
+                        print("probe skipped:", exc, file=sys.stderr, flush=True)
+                db.commit()
+                print("endpoint ready:", name, url)
+                break
+            finally:
+                db.close()
+        except Exception as exc:
+            last = exc
+            print("retry:", exc, file=sys.stderr, flush=True)
+            time.sleep(3)
+    else:
+        print("FAILED:", last, file=sys.stderr)
+        sys.exit(1)
+  '';
+
+  seedScript = pkgs.writeShellScript "odysseus-seed-endpoints" (
+    "set -eu\n"
+    + lib.concatMapStringsSep "\n" (ep:
+      "${lib.getExe pkgs.docker} exec -i"
+      + " -e ${ep.apiKeyEnv}"
+      + " -e ODYSSEUS_EP_NAME=${lib.escapeShellArg ep.name}"
+      + " -e ODYSSEUS_EP_URL=${lib.escapeShellArg ep.url}"
+      + " -e ODYSSEUS_EP_KEYENV=${ep.apiKeyEnv}"
+      + " odysseus python3 - < ${seedPy}"
+    ) cfg.seedEndpoints
+    + "\n"
+  );
+
   # Minimal compose: just the app. `OPENAI_API_KEY` is pulled from the
   # `LITELLM_MASTER_KEY` env var (fed in via EnvironmentFile, never written to
   # the store); `ODYSSEUS_ADMIN_PASSWORD` is passed straight through from the
@@ -170,6 +239,35 @@ in
       default = { };
       description = "Extra env vars exported before `docker compose` (available for interpolation).";
     };
+
+    seedEndpoints = lib.mkOption {
+      type = lib.types.listOf (lib.types.submodule {
+        options = {
+          name = lib.mkOption {
+            type = lib.types.str;
+            description = "Display name for the endpoint.";
+          };
+          url = lib.mkOption {
+            type = lib.types.str;
+            description = "OpenAI-compatible base URL (used as the idempotency key).";
+          };
+          apiKeyEnv = lib.mkOption {
+            type = lib.types.str;
+            default = "LITELLM_MASTER_KEY";
+            description = ''
+              Name of the env var (present in {option}`apiKeyFile`) holding the
+              bearer token for this endpoint. Passed into the container by name
+              so the secret never reaches the process command line.
+            '';
+          };
+        };
+      });
+      default = [ ];
+      description = ''
+        LLM provider endpoints inserted into the app's SQLite DB on start.
+        Idempotent by `url`; runs after {option}`enable` brings the container up.
+      '';
+    };
   };
 
   config = lib.mkIf cfg.enable {
@@ -203,6 +301,21 @@ in
         # First build compiles the app image from source on a slow CPU; don't
         # let systemd's default 90s start timeout kill it.
         TimeoutStartSec = 3600;
+      };
+    };
+
+    # Seed endpoints after the app (and its DB schema) is up. Separate unit so a
+    # transient probe failure can't take down the workspace itself.
+    systemd.services.odysseus-seed = lib.mkIf (cfg.seedEndpoints != [ ]) {
+      description = "Seed Odysseus LLM provider endpoints";
+      wantedBy = [ "multi-user.target" ];
+      after = [ "odysseus.service" ];
+      requires = [ "odysseus.service" ];
+      environment = cfg.extraEnvironment;
+      serviceConfig = {
+        Type = "oneshot";
+        EnvironmentFile = [ cfg.apiKeyFile ];
+        ExecStart = seedScript;
       };
     };
 

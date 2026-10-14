@@ -205,6 +205,14 @@ in
     ];
     apiKeyFile = config.age.secrets.litellm-master-key.path;
     adminPasswordFile = config.age.secrets.odysseus-admin-password.path;
+    # Seed the LiteLLM proxy as an LLM provider (avoids the manual Settings
+    # dance; endpoint discovery can't find :4000 on its own).
+    seedEndpoints = [
+      {
+        name = "LiteLLM";
+        url = "http://host.docker.internal:4000/v1";
+      }
+    ];
   };
 
   programs.git = {
