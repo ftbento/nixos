@@ -25,8 +25,8 @@ picking the right profile(s) rather than copying/replicating config.
 │   ├── software/              #   gaming, flatpak, rustdesk, vpn, netbird,
 │   │                          #   localsend, prismlauncher
 │   ├── services/              #   monitoring (Prometheus/Grafana + agents),
-│   │                          #   proxmox (native PVE), dashboard (Homepage
-│   │                          #   service landing page behind nginx)
+│   │                          #   dashboard (Homepage service landing page
+│   │                          #   behind nginx)
 │   ├── tweaks/                #   man
 │   └── wm/                    #   hyprland
 ├── home/                      # Home-manager user profiles + shared HM modules

@@ -32,181 +32,6 @@ let
     methods = GET, PUT, POST, HEAD, DELETE
   '';
 
-  # Declarative RackPeek inventory documenting this server and its services.
-  # Schema v2: https://raw.githubusercontent.com/Timmoth/RackPeek/main/schemas/v2/schema.v2.json
-  # Hardware facts captured from the live host (Ryzen 5 3400G, ~10 GB RAM,
-  # 256 GB NVMe, Gigabit NIC). Nix is the source of truth — this YAML is
-  # regenerated on every rebuild and not edited through the web UI.
-  rackpeekSpec = {
-    version = 2;
-    resources = [
-      {
-        kind = "Server";
-        name = "argon";
-        tags = [ "home-server" "nixos" ];
-        notes = "Headless home server running NixOS.";
-        labels = {
-          hostname = "argon";
-          ip = "10.8.90.205";
-        };
-        ram = { size = 10; };
-        cpus = [
-          {
-            model = "AMD Ryzen 5 3400G with Radeon Vega Graphics";
-            cores = 4;
-            threads = 8;
-          }
-        ];
-        drives = [ { type = "nvme"; size = 256; } ];
-        nics = [ { type = "rj45"; speed = 1000; ports = 1; } ];
-      }
-      {
-        kind = "System";
-        name = "nixos";
-        runsOn = [ "argon" ];
-        type = "baremetal";
-        os = "NixOS 26.05 (Yarara), kernel 6.18.46";
-        cores = 8;
-        ram = 10;
-        drives = [ { type = "nvme"; size = 256; } ];
-      }
-      {
-        kind = "System";
-        name = "proxmox-ve";
-        tags = [ "proxmox" "virtualization" ];
-        notes = "Native Proxmox VE hypervisor running on NixOS (proxmox-nixos), pve-manager 9.2.";
-        runsOn = [ "argon" ];
-        type = "hypervisor";
-        os = "Proxmox VE 9.2 (pve-manager) on NixOS 26.05";
-        cores = 8;
-        ram = 10;
-        drives = [ { type = "nvme"; size = 256; } ];
-      }
-      {
-        kind = "Service";
-        name = "openssh";
-        runsOn = [ "argon" ];
-        network = {
-          ip = "10.8.90.205";
-          port = 205;
-          protocol = "TCP";
-        };
-      }
-      {
-        kind = "Service";
-        name = "obsidian-livesync";
-        notes = "CouchDB 3.3.3 container serving Obsidian LiveSync.";
-        runsOn = [ "argon" ];
-        network = {
-          ip = "10.8.90.205";
-          port = 5984;
-          protocol = "TCP";
-          url = "https://argon.note-tawny.ts.net";
-        };
-      }
-      {
-        kind = "Service";
-        name = "tailscale";
-        runsOn = [ "argon" ];
-        network = {
-          ip = "10.8.90.205";
-          port = 41641;
-          protocol = "UDP";
-        };
-      }
-      {
-        kind = "Service";
-        name = "rackpeek";
-        notes = "Homelab documentation web UI backed by this declarative YAML.";
-        runsOn = [ "argon" ];
-        network = {
-          ip = "10.8.90.205";
-          port = 8080;
-          protocol = "TCP";
-          url = "http://argon.note-tawny.ts.net:8080";
-        };
-      }
-      {
-        kind = "Service";
-        name = "proxmox-ve";
-        notes = ''
-          Web UI + REST API of the native PVE stack (proxmox-nixos on NixOS),
-          listening on :8006.
-
-          ## Monitoring the hypervisor
-
-          The monitoring hub scrapes PVE through prometheus-pve-exporter
-          (Prometheus job `pve`, localhost:9221, every 60s) and provisions a
-          "Proxmox VE" Grafana dashboard. The exporter authenticates with an API
-          token bound to a dedicated user, never with root@pam.
-
-          ### RBAC — set up once in the web UI (https://10.8.90.205:8006)
-
-          1. Datacenter → Permissions → Users → Add
-             - User: `monitoring`, Realm: `Proxmox VE authentication server` (PVE)
-             - Password can be anything; the API token below is what is used.
-          2. Datacenter → Permissions → Roles → Add: role `Monitoring` with
-             privileges `Sys.Audit`, `VM.Audit`, `Datastore.Audit`
-             (`Pool.Audit` too if pools are used).
-             - `PVEAuditor` is NOT enough: the exporter needs `Sys.Audit` on `/`
-               (403 "Permission check failed (/, Sys.Audit)" otherwise).
-          3. Datacenter → Permissions → Add: assign user `monitoring@pve` the
-             role `Monitoring` at Path `/`.
-          4. Datacenter → Permissions → API Tokens → Add
-             - User: `monitoring@pve`, TokenID: `monitoring`
-             - Leave *Privilege Separation* unchecked so the token inherits the
-               `Monitoring` role.
-
-          ### Token lifecycle (agenix, never in the repo in clear text)
-
-          Sealed in `secrets/proxmox-pve-exporter.age` (recipients: argon,
-          radon, elitebook) as KEY=VALUE lines:
-
-              PVE_USER=monitoring@pve
-              PVE_TOKEN_NAME=monitoring
-              PVE_TOKEN_VALUE=<token>
-
-          `services.proxmox.pveToken` points the module
-          (modules/services/proxmox) at that secret; an activation script
-          regenerates `/var/lib/prometheus-pve-exporter/pve.yml` from it on
-          every build. To rotate:
-
-          1. Re-seal the secret on radon with the new token value.
-          2. `nixos-rebuild switch --flake .#argon --target-host argon`
-          3. `systemctl restart prometheus-pve-exporter` (the exporter loads
-             pve.yml at start).
-
-          ### Verify
-
-          - `curl -s -o /dev/null -w "%{http_code}" "http://127.0.0.1:9221/pve?cluster=1&module=default&node=1&target=127.0.0.1"` → 200
-          - Prometheus (`http://127.0.0.1:9090/targets`): job `pve` health "up",
-            empty lastError; mirrored in the Grafana Proxmox dashboard.
-        '';
-        runsOn = [ "argon" ];
-        network = {
-          ip = "10.8.90.205";
-          port = 8006;
-          protocol = "TCP";
-          url = "https://10.8.90.205:8006";
-        };
-      }
-      {
-        kind = "Service";
-        name = "dashboard";
-        notes = "Homepage service landing page behind nginx on :80 (web UIs + /info docs for non-web services).";
-        runsOn = [ "argon" ];
-        network = {
-          ip = "10.8.90.205";
-          port = 80;
-          protocol = "TCP";
-          url = "http://argon.note-tawny.ts.net";
-        };
-      }
-    ];
-  };
-
-  rackpeekYaml = (pkgs.formats.yaml {}).generate "config.yaml" rackpeekSpec;
-
   # --- Local LLM fallback (CPU, AVX2) ---
   # argon's always-on fallback for LiteLLM when radon is off. Built from
   # pkgs.llama-cpp-avx2 (modules/services/ai/llama-cpp-avx2.nix) so the 3400G
@@ -221,7 +46,6 @@ in
     ../../modules/services/ai/llama-cpp-avx2.nix
     ../../modules/services/ai/llama-swap.nix
     ../../modules/services/monitoring
-    ../../modules/services/proxmox
     ../../modules/services/dashboard
   ];
 
@@ -231,15 +55,9 @@ in
   boot.loader.systemd-boot.enable = true;
   boot.loader.efi.canTouchEfiVariables = true;
 
-  # KVM acceleration for Proxmox guests (PVE uses its own pve-qemu).
-  boot.kernelModules = [ "kvm-amd" ];
-
-  # Networking & Static IP Configuration.
-  # The static IP lives on the vmbr0 bridge so Proxmox VMs can share the LAN
-  # NIC (enp10s0 becomes a bridge slave). Kept the same 10.8.90.205 address.
+  # Networking & Static IP Configuration (10.8.90.205 on the LAN NIC).
   networking.useDHCP = false;
-  networking.bridges.vmbr0.interfaces = [ "enp10s0" ];
-  networking.interfaces.vmbr0 = {
+  networking.interfaces.enp10s0 = {
     ipv4.addresses = [{
       address = "10.8.90.205";
       prefixLength = 24;
@@ -430,14 +248,11 @@ in
     allowedTCPPorts = [
       205    # SSH
       5984   # Obsidian LiveSync
-      8080   # RackPeek (LAN + tailnet)
     # 80 is opened by services/dashboard (nginx + the port option).
     ];
     allowedUDPPorts = [
       41641  # Tailscale
     ];
-    # Proxmox (8006 web UI + API, 80/443/111 + corosync UDP 5405-5412) is
-    # opened by the proxmox module (services.proxmox-ve.openFirewall).
 
     # LiteLLM (:4000) — listens on 0.0.0.0 so both the LAN and the Docker
     # bridge can reach it (Odysseus runs in a container and talks to the host).
@@ -450,15 +265,6 @@ in
       iptables -D nixos-fw -p tcp -s 10.8.90.0/24 --dport 4000 -j nixos-fw-accept 2>/dev/null || true
       iptables -D nixos-fw -p tcp -s 172.16.0.0/12 --dport 4000 -j nixos-fw-accept 2>/dev/null || true
     '';
-  };
-
-  # --- Proxmox VE (native hypervisor, via proxmox-nixos) ---
-  services.proxmox = {
-    enable = true;
-    ipAddress = "10.8.90.205";
-    bridges = [ "vmbr0" ];
-    monitoring = true; # pve exporter -> Prometheus + Grafana dashboard
-    pveToken = ../../secrets/proxmox-pve-exporter.age; # PVE API token (agenix)
   };
 
   # --- Container engine ---
@@ -476,15 +282,15 @@ in
   services.monitoring = {
     exporter = {
       enable = true;
-      containerMetrics = true; # CouchDB + RackPeek container stats via cAdvisor
+      containerMetrics = true; # CouchDB container stats via cAdvisor
     };
     server.enable = true;
-    # Phone push alerts: container/PVE/host health, load/memory/disk, plus a
+    # Phone push alerts: container/host health, load/memory/disk, plus a
     # boot notification that fires when argon comes back after a crash.
     server.alerting = {
       enable = true;
       ntfyTopic = "nixos-argon-alerts";
-      containers = [ "obsidian-livesync" "rackpeek" ];
+      containers = [ "obsidian-livesync" ];
     };
   };
 
@@ -501,28 +307,11 @@ in
       # --- Web UIs ---
       {
         group = "Web UI";
-        name = "RackPeek";
-        description = "Homelab inventory & docs";
-        icon = "mdi-server";
-        href = "http://argon.note-tawny.ts.net:8080";
-        siteMonitor = "http://argon.note-tawny.ts.net:8080";
-      }
-      {
-        group = "Web UI";
         name = "Grafana";
         description = "Prometheus metrics dashboards";
         icon = "si-grafana";
         href = "http://argon.note-tawny.ts.net:3000";
         siteMonitor = "http://argon.note-tawny.ts.net:3000";
-      }
-      {
-        group = "Web UI";
-        name = "Proxmox VE";
-        description = "Virtualization console & API";
-        icon = "si-proxmox";
-        href = "https://10.8.90.205:8006";
-        # Self-signed cert breaks HTTP HEAD checks, so show reachability only.
-        ping = "10.8.90.205";
       }
       # --- No web UI: docs pages under /info/<slug> ---
       {
@@ -588,8 +377,8 @@ in
             tailscale ping argon          # check reachability
             ssh root@argon -p 205         # SSH over the tailnet
 
-          Docker services (RackPeek :8080, this dashboard :80) are accessible
-          over the tailnet without exposing extra ports publicly.
+          This dashboard (:80) and Grafana (:3000) are accessible over the
+          tailnet without exposing extra ports publicly.
         '';
       }
     ];
@@ -624,16 +413,6 @@ in
       rm -f "$admins.new"
     fi
   '';
-  # Declarative RackPeek state: overwritten every rebuild so the docs always
-  # match the NixOS config (Nix is the source of truth, not the web UI).
-  system.activationScripts.rackpeek.text = ''
-    mkdir -p /var/lib/rackpeek
-    cp -f ${rackpeekYaml} /var/lib/rackpeek/config.yaml
-    # RackPeek runs as UID 1654 (app) and rewrites config.yaml (keeping a .bak),
-    # so the state dir + file must be owned by that UID.
-    chown -R 1654:1654 /var/lib/rackpeek
-    chmod 0660 /var/lib/rackpeek/config.yaml
-  '';
   virtualisation.oci-containers.containers = {
     obsidian-livesync = {
       image = "couchdb:3.3.3";
@@ -645,13 +424,6 @@ in
         # loads local.d ini fragments on every start, unlike env vars which are
         # only honoured on first boot.
         "/var/lib/obsidian-livesync/10-admins.ini:/opt/couchdb/etc/local.d/10-admins.ini"
-      ];
-    };
-    rackpeek = {
-      image = "aptacode/rackpeek:v2.0.0";
-      ports = [ "8080:8080" ];
-      volumes = [
-        "/var/lib/rackpeek:/app/config"
       ];
     };
   };

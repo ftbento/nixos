@@ -38,12 +38,6 @@
       url = "github:noctalia-dev/noctalia";
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
-
-    proxmox-nixos = {
-      url = "github:SaumonNet/proxmox-nixos";
-      # Do NOT follow inputs here: the project only supports its pinned
-      # nixpkgs-stable, which currently matches our own nixos-26.05 branch.
-    };
   };
 
   outputs = { self, nixpkgs, home-manager, ... }@inputs: let

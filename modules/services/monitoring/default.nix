@@ -17,7 +17,7 @@
 #
 # NOTE: container metrics use cAdvisor on port 9323, because nixpkgs (26.05)
 # has no `services.prometheus.exporters.docker` module or docker exporter
-# package. Port 9323 avoids the 8080 used by RackPeek on argon.
+# package.
 
 { config, lib, pkgs, ... }:
 
@@ -89,18 +89,6 @@ let
           description = "Prometheus has not scraped the node exporter for over 2 minutes.";
           resolved_summary = "Node exporter is reporting again";
           resolved_description = "Prometheus is successfully scraping the node exporter.";
-        };
-      }
-      {
-        alert = "PveExporterDown";
-        expr = ''up{job="pve"} == 0'';
-        for = "2m";
-        labels = { severity = "critical"; host = config.networking.hostName; };
-        annotations = {
-          summary = "Proxmox VE exporter unreachable on {{ $labels.host }}";
-          description = "The pve job has not been scraped for over 2 minutes; hypervisor metrics are stale.";
-          resolved_summary = "Proxmox VE exporter is reporting again";
-          resolved_description = "The pve scrape job is healthy again.";
         };
       }
       {
@@ -217,8 +205,8 @@ in
         default = [ ];
         description = ''
           Extra Prometheus scrape_configs to append after the node/cAdvisor
-          jobs. Used by feature modules (e.g. the Proxmox exporter) to feed
-          Prometheus without touching the base jobs.
+          jobs. Used by feature modules to feed Prometheus without touching the
+          base jobs.
         '';
       };
 
@@ -303,8 +291,8 @@ in
             http_addr = "0.0.0.0";
             http_port = cfg.server.port;
           };
-          # LAN/tailnet-only access, like RackPeek: no public sign-ups, no
-          # telemetry out of the box.
+          # LAN/tailnet-only access: no public sign-ups, no telemetry out of
+          # the box.
           users.allow_sign_up = false;
           analytics.reporting_enabled = false;
         };

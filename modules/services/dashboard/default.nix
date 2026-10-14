@@ -6,9 +6,9 @@
 #                       explaining how to use the service
 #
 # Homepage is a NixOS module (`services.homepage-dashboard`) whose config
-# files are written read-only into /etc (the nix store) - the same
-# "Nix is the source of truth" philosophy used for RackPeek on argon. The
-# dashboard UI only ever runs on localhost; nginx is the single public door.
+# files are written read-only into /etc (the nix store) - the NixOS config is
+# the source of truth. The dashboard UI only ever runs on localhost; nginx is
+# the single public door.
 #
 # Adding this to a new server is enable + a service list, and every entry can
 # point at any IP/hostname (it's just a link):
