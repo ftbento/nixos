@@ -62,8 +62,9 @@ let
   # Idempotent, by base_url. Runs inside the container (only place with both
   # the app's Fernet key at data/.app_key and the cryptography package), so the
   # API key gets encrypted through the app's own ORM — a raw sqlite insert would
-  # store plaintext the app can't read. Also primes `cached_models` since
-  # proxy-kind endpoints don't auto-refresh.
+  # store plaintext the app can't read. Also refreshes `cached_models` on every
+  # start: proxy-kind endpoints don't auto-refresh, so this keeps Odysseus's
+  # model list in sync with LiteLLM whenever the model_list changes.
   seedPy = pkgs.writeText "odysseus-seed-endpoints.py" ''
     import json
     import os
@@ -92,15 +93,14 @@ let
                         is_enabled=True,
                     )
                     db.add(ep)
-                if not ep.cached_models:
-                    try:
-                        from routes.model_routes import _normalize_base, _probe_endpoint
+                try:
+                    from routes.model_routes import _normalize_base, _probe_endpoint
 
-                        models = _probe_endpoint(_normalize_base(url), key, timeout=20)
-                        if models:
-                            ep.cached_models = json.dumps(models)
-                    except Exception as exc:
-                        print("probe skipped:", exc, file=sys.stderr, flush=True)
+                    models = _probe_endpoint(_normalize_base(url), key, timeout=20)
+                    if models:
+                        ep.cached_models = json.dumps(models)
+                except Exception as exc:
+                    print("probe skipped:", exc, file=sys.stderr, flush=True)
                 db.commit()
                 print("endpoint ready:", name, url)
                 break

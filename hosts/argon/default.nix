@@ -114,13 +114,16 @@ in
   ];
 
   # --- LiteLLM (model router + priority failover) --------------------------
-  # One OpenAI-compatible endpoint for the house. Every alias fans out to radon
-  # first (fast, on the GPU over the LAN) and falls back to the local
-  # qwen3.5-4b when radon is off. `order` gives the priority failover; the
-  # cooldown keeps a failed radon marked-down for a while so we don't re-probe
-  # it on every request. Background health checks are deliberately left off —
-  # they would load the lazy local model and immediately unload it again (hence
-  # the per-deployment disable flag, which also keeps on-demand /health cheap).
+  # One OpenAI-compatible endpoint for the house, with two kinds of entries:
+  #   * direct models  -> radon only, exposed under their real upstream names
+  #     (no alias, no fallback; if radon is off they just error).
+  #   * automation aliases -> radon primary with an argon qwen3.5-4b fallback,
+  #     created one-per-automation (email, ...). `order` gives the priority
+  #     failover; the cooldown keeps a failed radon marked-down for a while so
+  #     we don't re-probe it on every request. Background health checks are
+  #     deliberately left off on the argon rows — they would load the lazy local
+  #     model and immediately unload it again (the per-deployment disable flag
+  #     also keeps on-demand /health cheap).
   services.litellm = {
     enable = true;
     host = "0.0.0.0"; # Odysseus runs in Docker and must reach the host
@@ -128,55 +131,35 @@ in
     environmentFile = config.age.secrets.litellm-master-key.path;
     settings = {
       model_list = [
-        # daily -> GPT-OSS 20B (radon) / qwen3.5-4b (argon)
+        # --- Direct models: radon only, real names, no alias/fallback ---
         {
-          model_name = "daily";
+          model_name = "gpt-oss-20b";
+          litellm_params = { model = "openai/gpt-oss-20b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; };
+          model_info = { id = "gpt-oss-20b-radon"; };
+        }
+        {
+          model_name = "qwen3.6-35b-a3b";
+          litellm_params = { model = "openai/qwen3.6-35b-a3b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; };
+          model_info = { id = "qwen3.6-35b-a3b-radon"; };
+        }
+        # 9B stands in for the real Ajax model; swap this line when it lands.
+        {
+          model_name = "qwen3.5-9b";
+          litellm_params = { model = "openai/qwen3.5-9b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; };
+          model_info = { id = "qwen3.5-9b-radon"; };
+        }
+        # --- Automation aliases: radon first, argon qwen3.5-4b fallback ---
+        # email: read/summarize/draft/classify — fast + strong instruction
+        # following beats raw size for high-frequency automation.
+        {
+          model_name = "email";
           litellm_params = { model = "openai/gpt-oss-20b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; order = 1; };
-          model_info = { id = "daily-radon"; };
+          model_info = { id = "email-radon"; };
         }
         {
-          model_name = "daily";
+          model_name = "email";
           litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; order = 2; };
-          model_info = { id = "daily-argon"; disable_background_health_check = true; };
-        }
-        # smart -> Qwen3.6 35B-A3B (radon) / qwen3.5-4b (argon)
-        {
-          model_name = "smart";
-          litellm_params = { model = "openai/qwen3.6-35b-a3b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; order = 1; };
-          model_info = { id = "smart-radon"; };
-        }
-        {
-          model_name = "smart";
-          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; order = 2; };
-          model_info = { id = "smart-argon"; disable_background_health_check = true; };
-        }
-        # tools -> Qwen3.5 9B (radon, tool-capable) / qwen3.5-4b (argon)
-        {
-          model_name = "tools";
-          litellm_params = { model = "openai/qwen3.5-9b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; order = 1; };
-          model_info = { id = "tools-radon"; };
-        }
-        {
-          model_name = "tools";
-          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; order = 2; };
-          model_info = { id = "tools-argon"; disable_background_health_check = true; };
-        }
-        # ajax -> Qwen3.5 9B placeholder until the real Ajax model lands
-        {
-          model_name = "ajax";
-          litellm_params = { model = "openai/qwen3.5-9b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; order = 1; };
-          model_info = { id = "ajax-radon"; };
-        }
-        {
-          model_name = "ajax";
-          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; order = 2; };
-          model_info = { id = "ajax-argon"; disable_background_health_check = true; };
-        }
-        # local -> argon only, never radon
-        {
-          model_name = "local";
-          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; };
-          model_info = { id = "local-argon"; disable_background_health_check = true; };
+          model_info = { id = "email-argon"; disable_background_health_check = true; };
         }
       ];
       general_settings = {
@@ -434,14 +417,14 @@ in
         siteMonitor = "http://127.0.0.1:4000/health/liveliness";
         info = ''
           LiteLLM is the OpenAI-compatible proxy every client should talk to.
-          It exposes stable aliases and falls back automatically when radon is
-          off:
+          Direct models point at radon under their real names (no fallback);
+          automation aliases fall back to argon when radon is off:
 
-            daily  -> GPT-OSS 20B (radon), else qwen3.5-4b (argon)
-            smart  -> Qwen3.6-35B-A3B (radon), else qwen3.5-4b (argon)
-            tools  -> Qwen3.5-9B placeholder, else qwen3.5-4b (argon)
-            ajax   -> Qwen3.5-9B placeholder, else qwen3.5-4b (argon)
-            local  -> qwen3.5-4b (argon only)
+            gpt-oss-20b      -> GPT-OSS 20B (radon only)
+            qwen3.6-35b-a3b  -> Qwen3.6 35B-A3B (radon only)
+            qwen3.5-9b       -> Qwen3.5 9B (radon only; Ajax stand-in)
+
+            email            -> GPT-OSS 20B (radon), else qwen3.5-4b (argon)
 
           Endpoint: http://10.8.90.205:4000/v1 (LAN only; :4000 is not
           reachable over the tailnet). Authenticate with the master key:
