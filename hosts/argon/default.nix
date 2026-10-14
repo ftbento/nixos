@@ -45,6 +45,7 @@ in
     ../../profiles/core.nix
     ../../modules/services/ai/llama-cpp-avx2.nix
     ../../modules/services/ai/llama-swap.nix
+    ../../modules/services/odysseus
     ../../modules/services/monitoring
     ../../modules/services/dashboard
   ];
@@ -190,6 +191,22 @@ in
     };
   };
 
+  # --- Odysseus (self-hosted AI workspace) ---
+  # Minimal stack (just the app container) built from a pinned upstream rev and
+  # bound to the Tailscale IP so it never lands on the LAN. Its LLM provider
+  # points at LiteLLM on the host (host.docker.internal:4000) using the master
+  # key, so every model alias is governed by the same failover rules.
+  services.odysseus = {
+    enable = true;
+    bindAddress = "100.97.118.91"; # tailnet-only
+    allowedOrigins = [
+      "http://100.97.118.91:7000"
+      "http://argon.note-tawny.ts.net:7000"
+    ];
+    apiKeyFile = config.age.secrets.litellm-master-key.path;
+    adminPasswordFile = config.age.secrets.odysseus-admin-password.path;
+  };
+
   programs.git = {
     enable = true;
     config = {
@@ -216,6 +233,13 @@ in
       # as root via the litellm unit's EnvironmentFile, so root/0400 is fine
       # even though the service itself runs as a DynamicUser.
       file = ../../secrets/litellm-master-key.age;
+      owner = "root";
+      mode = "0400";
+    };
+    odysseus-admin-password = {
+      # `ODYSSEUS_ADMIN_PASSWORD=...` — seeds the first Odysseus admin login.
+      # Read by systemd (root) as the odysseus unit's EnvironmentFile.
+      file = ../../secrets/odysseus-admin-password.age;
       owner = "root";
       mode = "0400";
     };
