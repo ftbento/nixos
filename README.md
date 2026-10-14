@@ -26,7 +26,9 @@ picking the right profile(s) rather than copying/replicating config.
 │   │                          #   localsend, prismlauncher
 │   ├── services/              #   monitoring (Prometheus/Grafana + agents),
 │   │                          #   dashboard (Homepage service landing page
-│   │                          #   behind nginx)
+│   │                          #   behind nginx), ai (llama-swap,
+│   │                          #   llama-cpp-avx2, LiteLLM failover proxy),
+│   │                          #   odysseus (AI workspace via docker compose)
 │   ├── tweaks/                #   man
 │   └── wm/                    #   hyprland
 ├── home/                      # Home-manager user profiles + shared HM modules

@@ -398,12 +398,12 @@ in
       {
         group = "Access & Infrastructure";
         name = "Tailscale";
-        description = "Tailnet: argon.note-tawny.ts.net / 10.8.90.205";
+        description = "Tailnet: argon.note-tawny.ts.net / 100.97.118.91";
         icon = "si-tailscale";
         ping = "argon.note-tawny.ts.net";
         info = ''
           argon is reachable on the tailnet as argon.note-tawny.ts.net
-          (tailnet IP 10.8.90.205). Useful from any node:
+          (tailnet IP 100.97.118.91). Useful from any node:
 
             tailscale status              # list machines
             tailscale ping argon          # check reachability
@@ -411,6 +411,46 @@ in
 
           This dashboard (:80) and Grafana (:3000) are accessible over the
           tailnet without exposing extra ports publicly.
+        '';
+      }
+      # --- AI stack ---
+      {
+        group = "AI";
+        name = "Odysseus";
+        description = "Self-hosted AI workspace (tailnet-only)";
+        icon = "mdi-robot";
+        href = "http://argon.note-tawny.ts.net:7000";
+        siteMonitor = "http://100.97.118.91:7000";
+      }
+      {
+        group = "AI";
+        name = "LiteLLM";
+        description = "Model alias proxy with radon -> argon failover";
+        icon = "mdi-brain";
+        siteMonitor = "http://127.0.0.1:4000/health/liveliness";
+        info = ''
+          LiteLLM is the OpenAI-compatible proxy every client should talk to.
+          It exposes stable aliases and falls back automatically when radon is
+          off:
+
+            daily  -> GPT-OSS 20B (radon), else qwen3.5-4b (argon)
+            smart  -> Qwen3.6-35B-A3B (radon), else qwen3.5-4b (argon)
+            tools  -> Qwen3.5-9B placeholder, else qwen3.5-4b (argon)
+            ajax   -> Qwen3.5-9B placeholder, else qwen3.5-4b (argon)
+            local  -> qwen3.5-4b (argon only)
+
+          Endpoint: http://10.8.90.205:4000/v1 (LAN only; :4000 is not
+          reachable over the tailnet). Authenticate with the master key:
+
+            cd ~/nixos/secrets && agenix -d litellm-master-key.age
+
+          Quick check:
+
+            curl -s http://10.8.90.205:4000/v1/models \
+              -H "Authorization: Bearer $LITELLM_MASTER_KEY"
+
+          Odysseus already points here; any other OpenAI-compatible client
+          (Continue, aider, ...) can too.
         '';
       }
     ];
