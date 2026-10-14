@@ -98,6 +98,10 @@ in
           "--threads 4"
           "--ctx-size 8192"
           "--jinja"
+          # Qwen3.5 defaults to "thinking": unbounded reasoning with empty
+          # content, which on a 4B/CPU fallback looks like a hang (and pins the
+          # box). Off for the fallback — users want an answer, not a monologue.
+          "--reasoning off"
           "--no-webui"
         ];
       };
