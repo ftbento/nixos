@@ -98,7 +98,7 @@ in
         };
         "qwen3.5-9b" = {
           name = "Qwen3.5 9B (tools / ajax placeholder)";
-          cmd = serveModel { file = "Qwen3.5-9B-Q4_K_M.gguf"; ctx = 16384; };
+          cmd = serveModel { file = "Qwen3.5-9B-Q4_K_M.gguf"; ctx = 32768; };
           aliases = [ "tools" "ajax" ];
         };
       };
