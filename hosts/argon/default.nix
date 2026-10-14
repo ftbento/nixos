@@ -290,6 +290,88 @@ in
     "d /var/lib/llama/models 0750 llama-swap llama-swap -"
   ];
 
+  # --- LiteLLM (model router + priority failover) --------------------------
+  # One OpenAI-compatible endpoint for the house. Every alias fans out to radon
+  # first (fast, on the GPU over the LAN) and falls back to the local
+  # qwen3.5-4b when radon is off. `order` gives the priority failover; the
+  # cooldown keeps a failed radon marked-down for a while so we don't re-probe
+  # it on every request. Background health checks are deliberately left off —
+  # they would load the lazy local model and immediately unload it again (hence
+  # the per-deployment disable flag, which also keeps on-demand /health cheap).
+  services.litellm = {
+    enable = true;
+    host = "0.0.0.0"; # Odysseus runs in Docker and must reach the host
+    port = 4000;
+    environmentFile = config.age.secrets.litellm-master-key.path;
+    settings = {
+      model_list = [
+        # daily -> GPT-OSS 20B (radon) / qwen3.5-4b (argon)
+        {
+          model_name = "daily";
+          litellm_params = { model = "openai/gpt-oss-20b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; order = 1; };
+          model_info = { id = "daily-radon"; };
+        }
+        {
+          model_name = "daily";
+          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; order = 2; };
+          model_info = { id = "daily-argon"; disable_background_health_check = true; };
+        }
+        # smart -> Qwen3.6 35B-A3B (radon) / qwen3.5-4b (argon)
+        {
+          model_name = "smart";
+          litellm_params = { model = "openai/qwen3.6-35b-a3b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; order = 1; };
+          model_info = { id = "smart-radon"; };
+        }
+        {
+          model_name = "smart";
+          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; order = 2; };
+          model_info = { id = "smart-argon"; disable_background_health_check = true; };
+        }
+        # tools -> Qwen3.5 9B (radon, tool-capable) / qwen3.5-4b (argon)
+        {
+          model_name = "tools";
+          litellm_params = { model = "openai/qwen3.5-9b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; order = 1; };
+          model_info = { id = "tools-radon"; };
+        }
+        {
+          model_name = "tools";
+          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; order = 2; };
+          model_info = { id = "tools-argon"; disable_background_health_check = true; };
+        }
+        # ajax -> Qwen3.5 9B placeholder until the real Ajax model lands
+        {
+          model_name = "ajax";
+          litellm_params = { model = "openai/qwen3.5-9b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; order = 1; };
+          model_info = { id = "ajax-radon"; };
+        }
+        {
+          model_name = "ajax";
+          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; order = 2; };
+          model_info = { id = "ajax-argon"; disable_background_health_check = true; };
+        }
+        # local -> argon only, never radon
+        {
+          model_name = "local";
+          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; };
+          model_info = { id = "local-argon"; disable_background_health_check = true; };
+        }
+      ];
+      general_settings = {
+        master_key = "os.environ/LITELLM_MASTER_KEY";
+      };
+      litellm_settings = {
+        drop_params = true;     # llama-server rejects unknown OpenAI params
+        request_timeout = 600;  # allow for a cold model load on radon
+      };
+      router_settings = {
+        routing_strategy = "simple-shuffle";
+        num_retries = 0;        # fail over to the next order tier immediately
+        allowed_fails = 1;
+        cooldown_time = 120;    # keep radon marked-down for 2 min after a failure
+      };
+    };
+  };
+
   programs.git = {
     enable = true;
     config = {
@@ -310,6 +392,14 @@ in
     github-ftbento = {
       file = ../../secrets/github-ftbento.age;
       owner = "root";
+    };
+    litellm-master-key = {
+      # `LITELLM_MASTER_KEY=sk-...` — the proxy's own API key. Read by systemd
+      # as root via the litellm unit's EnvironmentFile, so root/0400 is fine
+      # even though the service itself runs as a DynamicUser.
+      file = ../../secrets/litellm-master-key.age;
+      owner = "root";
+      mode = "0400";
     };
   };
 
@@ -348,6 +438,18 @@ in
     ];
     # Proxmox (8006 web UI + API, 80/443/111 + corosync UDP 5405-5412) is
     # opened by the proxmox module (services.proxmox-ve.openFirewall).
+
+    # LiteLLM (:4000) — listens on 0.0.0.0 so both the LAN and the Docker
+    # bridge can reach it (Odysseus runs in a container and talks to the host).
+    # nixos-fw already accepts loopback; the rest is source-restricted.
+    extraCommands = ''
+      iptables -A nixos-fw -p tcp -s 10.8.90.0/24 --dport 4000 -j nixos-fw-accept
+      iptables -A nixos-fw -p tcp -s 172.16.0.0/12 --dport 4000 -j nixos-fw-accept
+    '';
+    extraStopCommands = ''
+      iptables -D nixos-fw -p tcp -s 10.8.90.0/24 --dport 4000 -j nixos-fw-accept 2>/dev/null || true
+      iptables -D nixos-fw -p tcp -s 172.16.0.0/12 --dport 4000 -j nixos-fw-accept 2>/dev/null || true
+    '';
   };
 
   # --- Proxmox VE (native hypervisor, via proxmox-nixos) ---
