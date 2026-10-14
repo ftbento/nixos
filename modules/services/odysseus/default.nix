@@ -157,6 +157,11 @@ let
                     if models:
                         ep.cached_models = json.dumps(models)
                         ep.pinned_models = json.dumps(models)
+                    # LiteLLM aggregates direct models, several of which are
+                    # known-good for native tool calls even though their names
+                    # (e.g. gpt-oss-20b) are on Odyssesus's internal no-tools
+                    # block-list. Flag the whole proxy endpoint as tool-capable.
+                    ep.supports_tools = True
                 except Exception as exc:
                     print("probe skipped:", exc, file=sys.stderr, flush=True)
                 db.commit()
