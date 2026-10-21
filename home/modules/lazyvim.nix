@@ -83,6 +83,32 @@
                 auto_install = false,
               },
             },
+
+            -- On NixOS the system binaries come from nix (clang-tools, nil),
+            -- so never let mason try to install them (it fails for nil_ls).
+            -- clangd also needs --query-driver to discover the nix gcc
+            -- wrapper's implicit include paths (libstdc++, GL/GLEW headers).
+            {
+              "neovim/nvim-lspconfig",
+              opts = {
+                servers = {
+                  clangd = {
+                    mason = false,
+                    cmd = {
+                      "clangd",
+                      "--background-index",
+                      "--clang-tidy",
+                      "--header-insertion=iwyu",
+                      "--completion-style=detailed",
+                      "--function-arg-placeholders",
+                      "--fallback-style=llvm",
+                      "--query-driver=/nix/store/*/bin/g++,/nix/store/*/bin/gcc",
+                    },
+                  },
+                  nil_ls = { mason = false },
+                },
+              },
+            },
           },
           install = { missing = true }, -- plugin sync on first start (needs network)
           checker = { enabled = false },

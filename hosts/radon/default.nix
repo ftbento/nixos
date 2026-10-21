@@ -179,6 +179,12 @@ in
     home.nvim.enable = false;
     home.lazyvim.enable = true;
 
+    # Stylix's neovim theme injects `require('mini.base16')` into init.lua,
+    # which runs before Home Manager's packdir plugins are on the runtimepath,
+    # so it fails. Disable stylix's neovim target for now; LazyVim brings its
+    # own colorscheme (catppuccin).
+    stylix.targets.neovim.enable = false;
+
     xdg.configFile."hypr/host.lua".source = ./hyprland-host.lua;
 
     programs.noctalia.settings = {
