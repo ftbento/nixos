@@ -79,15 +79,6 @@ in
       startPort = 10001;
       includeAliasesInList = true;
       models = {
-        "gpt-oss-20b" = {
-          name = "GPT-OSS 20B (daily)";
-          # gpt-oss is used for Deep Research, where the accumulated inputs
-          # (plan + search results + findings) can exceed 8k tokens even on the
-          # first probe; 16k leaves enough headroom on the 16GB GPU. Retry with
-          # a smaller size if the GPU runs out of memory.
-          cmd = serveModel { file = "gpt-oss-20b-MXFP4.gguf"; ctx = 16384; };
-          aliases = [ "daily" ];
-        };
         "qwen3.6-35b-a3b" = {
           name = "Qwen3.6 35B A3B (smart)";
           # Thinking off: otherwise it can spend the whole context budget on
@@ -175,6 +166,19 @@ in
 #   Noctalia wallpapers/widgets live here too. (The lock screen is hyprlock
   #   everywhere — hyprland.lua Super+Escape + Noctalia session Lock action.)
   home-manager.users.${config.workstation.user} = {
+    # tmux is opted in per-host rather than from the shared user profile
+    # (home/benjidev.nix), so it stays off on other machines unless their host
+    # file imports home/modules/tmux.nix and sets home.tmux.enable too.
+    imports = [
+      ../../home/modules/tmux.nix
+      ../../home/modules/lazyvim.nix
+    ];
+    home.tmux.enable = true;
+
+    # LazyVim replaces the simple shared nvim config on this host.
+    home.nvim.enable = false;
+    home.lazyvim.enable = true;
+
     xdg.configFile."hypr/host.lua".source = ./hyprland-host.lua;
 
     programs.noctalia.settings = {

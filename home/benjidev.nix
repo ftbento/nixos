@@ -64,6 +64,9 @@ in {
       userEmail = "ftbento@users.noreply.github.com";
     };
     home.kitty.enable = true;
+    # mkDefault: hosts can opt into home.lazyvim instead (see
+    # home/modules/lazyvim.nix + hosts/radon/default.nix).
+    home.nvim.enable = lib.mkDefault true;
     home.fish = {
       enable = true;
       extraAliases = {

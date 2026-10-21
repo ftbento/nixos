@@ -129,11 +129,6 @@ in
       model_list = [
         # --- radon (Vulkan GPU) ---
         {
-          model_name = "gpt-oss-20b";
-          litellm_params = { model = "openai/gpt-oss-20b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; };
-          model_info = { id = "gpt-oss-20b-radon"; };
-        }
-        {
           model_name = "qwen3.6-35b-a3b";
           litellm_params = { model = "openai/qwen3.6-35b-a3b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; };
           model_info = { id = "qwen3.6-35b-a3b-radon"; };
@@ -425,7 +420,6 @@ in
           aliases and no proxy-level failover. Fallback between models is
           configured in Odysseus's own UI.
 
-            gpt-oss-20b      -> GPT-OSS 20B (radon GPU)
             qwen3.6-35b-a3b  -> Qwen3.6 35B-A3B (radon GPU)
             qwen3.5-9b       -> Qwen3.5 9B (radon GPU; Ajax stand-in)
             qwen3.5-4b       -> Qwen3.5 4B (argon CPU; fallback target)

@@ -3,6 +3,12 @@
   options.home.fastfetch.enable = lib.mkEnableOption "fastfetch configuration";
 
   config = lib.mkIf config.home.fastfetch.enable {
+    # Print the fetch at the top of every interactive shell, before the first
+    # prompt. mkAfter keeps it after fish.nix's greeting disable.
+    programs.fish.interactiveShellInit = lib.mkAfter ''
+      fastfetch
+    '';
+
     programs.fastfetch = {
       enable = true;
       settings = {
@@ -15,6 +21,11 @@
           };
         };
         modules = [
+             # the (taller) distro logo. One `break` module = one blank line.
+             { type = "break"; }
+             { type = "break"; }
+             { type = "break"; }
+             { type = "break"; }
              { type = "custom"; key = "╭────────╮"; }
               { type = "title"; key = "│ {#35}  nme {#keys}│"; keyWidth = 12; format = "{user-name}"; }
               { type = "title"; key = "│ {#35}󰌢  hst {#keys}│"; keyWidth = 12; format = "{host-name}"; }

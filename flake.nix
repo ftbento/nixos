@@ -11,8 +11,8 @@
     };
 
     zen-browser = {
-      url = "github:youwen5/zen-browser-flake";
-      inputs.nixpkgs.follows = "nixpkgs";
+      url = "github:0xc000022070/zen-browser-flake";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     agenix = {
@@ -32,6 +32,7 @@
 
     ytm-player = {
       url = "github:peternaame-boop/ytm-player";
+      inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
     noctalia = {
