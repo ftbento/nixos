@@ -266,6 +266,7 @@ in
     allowedTCPPorts = [
       205    # SSH
       5984   # Obsidian LiveSync
+      3001   # Uptime Kuma
     # 80 is opened by services/dashboard (nginx + the port option).
     ];
     allowedUDPPorts = [
@@ -312,6 +313,18 @@ in
     };
   };
 
+  # --- Uptime Kuma (simple up/down checks + status page) ---
+  # Complements the Grafana/Prometheus stack: external "is it up?" checks,
+  # public status page, SSL expiry, 90+ notification channels. Native module
+  # (DynamicUser, SQLite state in /var/lib/uptime-kuma).
+  services.uptime-kuma = {
+    enable = true;
+    settings = {
+      HOST = "0.0.0.0";
+      PORT = "3001";
+    };
+  };
+
   # --- Services dashboard ---
   # Homepage UI behind nginx on :80: clickable cards for every service on this
   # box. Web UIs open directly; non-web services (SSH, CouchDB, Tailscale) open
@@ -330,6 +343,14 @@ in
         icon = "si-grafana";
         href = "http://argon.note-tawny.ts.net:3000";
         siteMonitor = "http://argon.note-tawny.ts.net:3000";
+      }
+      {
+        group = "Web UI";
+        name = "Uptime Kuma";
+        description = "Uptime monitoring + status page";
+        icon = "si-uptimekuma";
+        href = "http://argon.note-tawny.ts.net:3001";
+        siteMonitor = "http://argon.note-tawny.ts.net:3001";
       }
       # --- No web UI: docs pages under /info/<slug> ---
       {
