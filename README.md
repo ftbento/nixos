@@ -23,13 +23,10 @@ picking the right profile(s) rather than copying/replicating config.
 │   │                          #   nh, tailscale, graphics, pipewire, bluetooth,
 │   │                          #   stylix, user, gpu/{amd,nvidia}
 │   ├── software/              #   gaming, flatpak, rustdesk, vpn, netbird,
-│   │                          #   localsend, prismlauncher
+│   │                          #   localsend, libreoffice, prismlauncher
 │   ├── services/              #   monitoring (Prometheus/Grafana + agents),
 │   │                          #   dashboard (Homepage service landing page
-│   │                          #   behind nginx), ai (llama-swap,
-│   │                          #   llama-cpp-avx2, LiteLLM model aggregator),
-│   │                          #   odysseus (AI workspace + searxng/chromadb/
-│   │                          #   ntfy via docker compose)
+│   │                          #   behind nginx)
 │   ├── tweaks/                #   man
 │   └── wm/                    #   hyprland
 ├── home/                      # Home-manager user profiles + shared HM modules
@@ -52,7 +49,7 @@ picking the right profile(s) rather than copying/replicating config.
 | Profile     | Applies to            | Contents |
 |-------------|-----------------------|----------|
 | `core.nix`  | Every device          | nix flakes, agenix, home-manager base, nh, tailscale, man, timezone/locale |
-| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland/hypridle/hyprlock, noctalia, gaming, flatpak, rustdesk, vpn, netbird, localsend, sddm/qylock, desktop home-manager (lock screen: hyprlock) |
+| `desktop.nix` | Interactive machines | graphics, pipewire, bluetooth, stylix, systemd (display-manager tweak), hyprland/hypridle/hyprlock, noctalia, gaming, flatpak, rustdesk, vpn, netbird, localsend, libreoffice, sddm/qylock, desktop home-manager (lock screen: hyprlock) |
 
 Each host imports `core.nix` plus the appropriate persona, then the host file
 keeps only what is truly host-specific. Headless servers (like argon) are

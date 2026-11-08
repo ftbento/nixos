@@ -32,20 +32,11 @@ let
     methods = GET, PUT, POST, HEAD, DELETE
   '';
 
-  # --- Local LLM fallback (CPU, AVX2) ---
-  # argon's always-on fallback for LiteLLM when radon is off. Built from
-  # pkgs.llama-cpp-avx2 (modules/services/ai/llama-cpp-avx2.nix) so the 3400G
-  # gets AVX2/FMA instead of the baseline SSE2 default; -t 4 = physical cores.
-  llamaServer = lib.getExe' pkgs.llama-cpp-avx2 "llama-server";
-  modelsDir = "/var/lib/llama/models";
 in
 {
   imports = [
     ./hardware-configuration.nix
     ../../profiles/core.nix
-    ../../modules/services/ai/llama-cpp-avx2.nix
-    ../../modules/services/ai/llama-swap.nix
-    ../../modules/services/odysseus
     ../../modules/services/monitoring
     ../../modules/services/dashboard
   ];
@@ -67,131 +58,7 @@ in
   networking.defaultGateway = "10.8.90.1";
   networking.nameservers = [ "1.1.1.1" "8.8.8.8" ];
 
-  # --- Swap (6 GB swapfile) ---
-  # argon shipped with no swap; a 6 GB file gives the LLM + Odysseus stack
-  # headroom. Declared here so it is created/reapplied on every boot.
-  swapDevices = [
-    { device = "/var/lib/llama/swapfile"; size = 6144; }
-  ];
-
-  # --- Local LLM fallback (llama-swap on CPU) ---
-  # Loopback-only: LiteLLM runs on this host and proxies here when radon is
-  # unreachable, so no firewall opening is needed. Lazy load (ttl 600s) keeps
-  # the ~4.6 GB out of RAM while radon is up (the common case).
-  services.llamaSwap = {
-    enable = true;
-    listenAddress = "127.0.0.1";
-    port = 9101;
-    extraGroups = [ ]; # CPU-only build: no GPU device nodes required
-    settings = {
-      healthCheckTimeout = 120;
-      logLevel = "info";
-      logToStdout = "proxy";
-      globalTTL = 600;
-      startPort = 10101;
-      models."qwen3.5-4b" = {
-        name = "Qwen3.5 4B (local fallback)";
-        cmd = lib.concatStringsSep " " [
-          llamaServer
-          "--model ${modelsDir}/Qwen_Qwen3.5-4B-Q4_K_M.gguf"
-          "--port \${PORT}"
-          "--threads 4"
-          "--ctx-size 8192"
-          "--jinja"
-          # Qwen3.5 defaults to "thinking": unbounded reasoning with empty
-          # content, which on a 4B/CPU fallback looks like a hang (and pins the
-          # box). Off for the fallback — users want an answer, not a monologue.
-          "--reasoning off"
-          "--no-webui"
-        ];
-      };
-    };
-  };
-
-  # GGUF weights directory, owned by the service user so llama-swap can read.
-  systemd.tmpfiles.rules = [
-    "d /var/lib/llama/models 0750 llama-swap llama-swap -"
-  ];
-
-  # --- LiteLLM (model aggregator) ------------------------------------------
-  # One OpenAI-compatible endpoint that gathers every model target under its
-  # real upstream name — no aliases, no proxy-level failover. Odysseus points
-  # here for all models; any failover between them is configured by the user in
-  # Odysseus's own UI. Background health checks are left off on the argon row:
-  # they would load the lazy local 4B model and immediately unload it again (the
-  # per-deployment disable flag also keeps on-demand /health cheap).
-  services.litellm = {
-    enable = true;
-    host = "0.0.0.0"; # Odysseus runs in Docker and must reach the host
-    port = 4000;
-    environmentFile = config.age.secrets.litellm-master-key.path;
-    settings = {
-      model_list = [
-        # --- radon (Vulkan GPU) ---
-        {
-          model_name = "qwen3.6-35b-a3b";
-          litellm_params = { model = "openai/qwen3.6-35b-a3b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; };
-          model_info = { id = "qwen3.6-35b-a3b-radon"; };
-        }
-        # 9B stands in for the real Ajax model; swap this line when it lands.
-        {
-          model_name = "qwen3.5-9b";
-          litellm_params = { model = "openai/qwen3.5-9b"; api_base = "http://10.8.90.228:9100/v1"; api_key = "sk-no-key"; };
-          model_info = { id = "qwen3.5-9b-radon"; };
-        }
-        # --- argon (CPU) ---
-        # Exposed under its real name so it can be wired as a fallback target
-        # for any radon model in Odysseus's per-user fallback UI.
-        {
-          model_name = "qwen3.5-4b";
-          litellm_params = { model = "openai/qwen3.5-4b"; api_base = "http://127.0.0.1:9101/v1"; api_key = "sk-no-key"; };
-          model_info = { id = "qwen3.5-4b-argon"; disable_background_health_check = true; };
-        }
-      ];
-      general_settings = {
-        master_key = "os.environ/LITELLM_MASTER_KEY";
-      };
-      litellm_settings = {
-        drop_params = true;     # llama-server rejects unknown OpenAI params
-        request_timeout = 600;  # allow for a cold model load on radon
-      };
-      # Each model is a single deployment, so there is nothing to fail over to
-      # at this layer (order/cooldown would be inert). Odysseus owns fallback.
-      router_settings = {
-        num_retries = 0;
-      };
-    };
-  };
-
-  # --- Odysseus (self-hosted AI workspace) ---
-  # Full upstream stack (odysseus + searxng + chromadb + ntfy), built from a
-  # pinned upstream rev. The UI is bound to the Tailscale IP so it never lands
-  # on the LAN; ntfy is likewise tailnet-only, while searxng/chromadb stay on
-  # loopback. Its LLM provider points at LiteLLM on the host
-  # (host.docker.internal:4000) using the master key; all model targets are
-  # direct names and any fallback is configured in Odysseus itself.
-  services.odysseus = {
-    enable = true;
-    bindAddress = "100.97.118.91"; # tailnet-only
-    allowedOrigins = [
-      "http://100.97.118.91:7000"
-      "http://argon.note-tawny.ts.net:7000"
-    ];
-    apiKeyFile = config.age.secrets.litellm-master-key.path;
-    adminPasswordFile = config.age.secrets.odysseus-admin-password.path;
-    searxngSecretFile = config.age.secrets.searxng-secret.path;
-    # ntfy over the tailnet so phones can subscribe without LAN exposure.
-    ntfyBind = "100.97.118.91";
-    ntfyBaseUrl = "http://100.97.118.91:8091";
-    # Seed the LiteLLM proxy as an LLM provider (avoids the manual Settings
-    # dance; endpoint discovery can't find :4000 on its own).
-    seedEndpoints = [
-      {
-        name = "LiteLLM";
-        url = "http://host.docker.internal:4000/v1";
-      }
-    ];
-  };
+  # Swap removed along with the LLM stack (was /var/lib/llama/swapfile).
 
   programs.git = {
     enable = true;
@@ -213,29 +80,6 @@ in
     github-ftbento = {
       file = ../../secrets/github-ftbento.age;
       owner = "root";
-    };
-    litellm-master-key = {
-      # `LITELLM_MASTER_KEY=sk-...` — the proxy's own API key. Read by systemd
-      # as root via the litellm unit's EnvironmentFile, so root/0400 is fine
-      # even though the service itself runs as a DynamicUser.
-      file = ../../secrets/litellm-master-key.age;
-      owner = "root";
-      mode = "0400";
-    };
-    odysseus-admin-password = {
-      # `ODYSSEUS_ADMIN_PASSWORD=...` — seeds the first Odysseus admin login.
-      # Read by systemd (root) as the odysseus unit's EnvironmentFile.
-      file = ../../secrets/odysseus-admin-password.age;
-      owner = "root";
-      mode = "0400";
-    };
-    searxng-secret = {
-      # `SEARXNG_SECRET=...` — substituted into SearXNG's settings.yml by the
-      # container entrypoint. Read by systemd (root) as the odysseus unit's
-      # EnvironmentFile and interpolated into the compose environment.
-      file = ../../secrets/searxng-secret.age;
-      owner = "root";
-      mode = "0400";
     };
   };
 
@@ -273,17 +117,6 @@ in
       41641  # Tailscale
     ];
 
-    # LiteLLM (:4000) — listens on 0.0.0.0 so both the LAN and the Docker
-    # bridge can reach it (Odysseus runs in a container and talks to the host).
-    # nixos-fw already accepts loopback; the rest is source-restricted.
-    extraCommands = ''
-      iptables -A nixos-fw -p tcp -s 10.8.90.0/24 --dport 4000 -j nixos-fw-accept
-      iptables -A nixos-fw -p tcp -s 172.16.0.0/12 --dport 4000 -j nixos-fw-accept
-    '';
-    extraStopCommands = ''
-      iptables -D nixos-fw -p tcp -s 10.8.90.0/24 --dport 4000 -j nixos-fw-accept 2>/dev/null || true
-      iptables -D nixos-fw -p tcp -s 172.16.0.0/12 --dport 4000 -j nixos-fw-accept 2>/dev/null || true
-    '';
   };
 
   # --- Container engine ---
@@ -418,94 +251,6 @@ in
 
           This dashboard (:80) and Grafana (:3000) are accessible over the
           tailnet without exposing extra ports publicly.
-        '';
-      }
-      # --- AI stack ---
-      {
-        group = "AI";
-        name = "Odysseus";
-        description = "Self-hosted AI workspace (tailnet-only)";
-        icon = "mdi-robot";
-        href = "http://argon.note-tawny.ts.net:7000";
-        siteMonitor = "http://100.97.118.91:7000";
-      }
-      {
-        group = "AI";
-        name = "LiteLLM";
-        description = "Aggregated OpenAI-compatible model endpoint";
-        icon = "mdi-brain";
-        siteMonitor = "http://127.0.0.1:4000/health/liveliness";
-        info = ''
-          LiteLLM is the OpenAI-compatible proxy every client should talk to.
-          Every model target is exposed under its real upstream name — no
-          aliases and no proxy-level failover. Fallback between models is
-          configured in Odysseus's own UI.
-
-            qwen3.6-35b-a3b  -> Qwen3.6 35B-A3B (radon GPU)
-            qwen3.5-9b       -> Qwen3.5 9B (radon GPU; Ajax stand-in)
-            qwen3.5-4b       -> Qwen3.5 4B (argon CPU; fallback target)
-
-          Endpoint: http://10.8.90.205:4000/v1 (LAN only; :4000 is not
-          reachable over the tailnet). Authenticate with the master key:
-
-            cd ~/nixos/secrets && agenix -d litellm-master-key.age
-
-          Quick check:
-
-            curl -s http://10.8.90.205:4000/v1/models \
-              -H "Authorization: Bearer $LITELLM_MASTER_KEY"
-
-          Odysseus already points here; any other OpenAI-compatible client
-          (Continue, aider, ...) can too.
-        '';
-      }
-      {
-        group = "AI";
-        name = "SearXNG";
-        description = "Private web search + Deep Research backend";
-        icon = "mdi-magnify";
-        siteMonitor = "http://127.0.0.1:8080/";
-        info = ''
-          SearXNG backs Odysseus web search and Deep Research. It listens on
-          loopback (127.0.0.1:8080) and is reached in-network as
-          http://searxng:8080; it is not exposed on the LAN or tailnet.
-
-          The instance secret is replaced into settings.yml on first boot from
-          the searxng-secret agenix secret.
-        '';
-      }
-      {
-        group = "AI";
-        name = "ChromaDB";
-        description = "Vector store for Odysseus memory/RAG";
-        icon = "mdi-database";
-        siteMonitor = "http://127.0.0.1:8100/api/v2/heartbeat";
-        info = ''
-          ChromaDB stores Odysseus embeddings for memory and retrieval.
-          Loopback-only (127.0.0.1:8100); reached in-network as
-          http://chromadb:8000. Data lives in the `odysseus_chromadb-data`
-          Docker volume.
-
-          Embeddings are generated locally with fastembed (no external API).
-        '';
-      }
-      {
-        group = "AI";
-        name = "ntfy";
-        description = "Push notifications (tailnet-only)";
-        icon = "mdi-bell";
-        siteMonitor = "http://100.97.118.91:8091/v1/health";
-        info = ''
-          ntfy delivers push notifications to phones/browsers. It is bound to
-          the tailnet at http://100.97.118.91:8091 (no auth — tailnet members
-          only).
-
-          Subscribe in the ntfy app to a topic, e.g.:
-
-            http://100.97.118.91:8091/odysseus
-
-          Odysseus's notification integration points at the in-network name
-          http://ntfy:80.
         '';
       }
     ];

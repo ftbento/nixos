@@ -4,6 +4,12 @@
 
 { config, lib, pkgs, inputs, ... }:
 {
+  # Use Noctalia's binary cache so we don't compile the shell from source.
+  nix.settings = {
+    extra-substituters = [ "https://noctalia.cachix.org" ];
+    extra-trusted-public-keys = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
+  };
+
   imports = [
     ../modules/core/graphics.nix      # OpenGL/Vulkan
     ../modules/core/pipewire.nix      # audio
@@ -18,6 +24,7 @@
     ../modules/software/vpn.nix
     ../modules/software/netbird.nix
     ../modules/software/localsend.nix
+    ../modules/software/libreoffice.nix
     inputs.qylock.nixosModules.default
   ];
 
@@ -165,7 +172,7 @@
             }
             {
               id = "end2";
-              members = [ "volume" "battery" "session" ];
+              members = [ "battery" "volume" "session" ];
               padding = 12.0;
               fill = "surface_variant";
               opacity = 1.0;
@@ -267,7 +274,10 @@
     home.packages = with pkgs; [
       vesktop
       wlogout
-      obsidian
+      # Temporary: nixpkgs obsidian 1.13.7 breaks with electron 43.8.3
+      # (webFrame defineProperty error). Use obsidian from the previous
+      # nixpkgs revision until nixpkgs ships a compatible build.
+      (import inputs.nixpkgs-old { system = pkgs.stdenv.hostPlatform.system; config = pkgs.config; }).obsidian
       inputs.ytm-player.packages.${pkgs.stdenv.hostPlatform.system}.default
       nerd-fonts.jetbrains-mono
     ];

@@ -1,9 +1,19 @@
 {
+  nixConfig = {
+    extra-substituters = [ "https://noctalia.cachix.org" ];
+    extra-trusted-public-keys = [ "noctalia.cachix.org-1:pCOR47nnMEo5thcxNDtzWpOxNFQsBRglJzxWPp3dkU4=" ];
+  };
+
   description = "NixOS configuration";
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixos-26.05";
     nixpkgs-unstable.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    # Pinned to the pre-update revision for a working Obsidian build.
+    nixpkgs-old = {
+      url = "github:nixos/nixpkgs/cd4ea8d57de16f4810bc5f14207bac45fbf19f67";
+    };
     
     home-manager = {
       url = "github:nix-community/home-manager/release-26.05";
@@ -35,9 +45,10 @@
       inputs.nixpkgs.follows = "nixpkgs-unstable";
     };
 
+    # Pin to the cachix branch so we always track the latest already-cached
+    # commit (avoids building uncached commits from main).
     noctalia = {
-      url = "github:noctalia-dev/noctalia";
-      inputs.nixpkgs.follows = "nixpkgs-unstable";
+      url = "github:noctalia-dev/noctalia/cachix";
     };
   };
 

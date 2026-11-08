@@ -11,9 +11,6 @@ in
   "cop3223c.age".publicKeys = [ benjidev_radon benjidev_elitebook_wsl];
 
   "couchdb-env.age".publicKeys = [ argon benjidev_radon benjidev_elitebook_wsl ];
-  "litellm-master-key.age".publicKeys = [ argon benjidev_radon benjidev_elitebook_wsl ];
-  "odysseus-admin-password.age".publicKeys = [ argon benjidev_radon benjidev_elitebook_wsl ];
-  "searxng-secret.age".publicKeys = [ argon benjidev_radon benjidev_elitebook_wsl ];
 }
 
 # paste the private key in the editor

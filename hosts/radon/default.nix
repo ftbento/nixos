@@ -3,21 +3,6 @@
 { config, lib, pkgs, inputs, users, ... }:
 
 let
-  # --- Local LLM serving (llama-swap on Vulkan) ---------------------------------
-  # The three GGUFs live in /var/lib/llama/models (moved there from the
-  # bake-off downloads). -ngl 999 offloads every layer to the RX 9070; --jinja
-  # enables the model's own chat template (needed for tool calling).
-  llamaServer = lib.getExe' pkgs.llama-cpp-vulkan "llama-server";
-  modelsDir = "/var/lib/llama/models";
-  serveModel = { file, ctx }: lib.concatStringsSep " " [
-    llamaServer
-    "--model ${modelsDir}/${file}"
-    "--port \${PORT}"          # llama-swap substitutes ${PORT} (startPort+)
-    "--ctx-size ${toString ctx}"
-    "--n-gpu-layers 999"
-    "--jinja"
-    "--no-webui"
-  ];
 in
 {
   imports = [
@@ -26,7 +11,6 @@ in
     ../../profiles/desktop.nix
     ../../modules/core/gpu/amd.nix  # host-specific GPU driver
     ../../modules/software/prismlauncher.nix  # Prism Launcher (GTNH single-player)
-    ../../modules/services/ai/llama-swap.nix  # on-demand LLM serving for LiteLLM
     users.benjidev                  # primary user account (home/benjidev.nix)
   ];
 
@@ -34,8 +18,7 @@ in
   workstation.user = "benjidev";
 
   # --- Static LAN IP on ethernet -------------------------------------------
-  # radon talks to argon (the always-on LiteLLM/Odysseus host) over the LAN,
-  # so it needs a stable address: 10.8.90.228. NetworkManager is already
+  # radon's stable LAN address: 10.8.90.228. NetworkManager is already
   # enabled by the desktop profile, so the profile is declared the NM way.
   # The DHCP wifi (wlo1) is left completely alone as an ignored failover;
   # `autoconnect-priority` makes this wired profile win over the auto-created
@@ -62,55 +45,6 @@ in
     };
   };
 
-  # --- Local LLM serving (llama-swap + Vulkan) -----------------------------
-  # Exposed to LiteLLM on argon at http://10.8.90.228:9100/v1. Models are
-  # lazily loaded and unloaded 10 minutes after the last request (ttl) so the
-  # GPU is free for gaming. Reached over the LAN only — see the firewall rule
-  # below — never over the tailnet.
-  services.llamaSwap = {
-    enable = true;
-    listenAddress = "0.0.0.0";
-    port = 9100;
-    settings = {
-      healthCheckTimeout = 300; # allow time for a cold 35B load
-      logLevel = "info";
-      logToStdout = "proxy";
-      globalTTL = 600;
-      startPort = 10001;
-      includeAliasesInList = true;
-      models = {
-        "qwen3.6-35b-a3b" = {
-          name = "Qwen3.6 35B A3B (smart)";
-          # Thinking off: otherwise it can spend the whole context budget on
-          # invisible reasoning and return empty; the larger ctx gives Odysseus
-          # room when it injects memory/context into the prompt.
-          cmd = serveModel { file = "Qwen3.6-35B-A3B-UD-IQ3_XXS.gguf"; ctx = 8192; } + " --reasoning off";
-          aliases = [ "smart" ];
-        };
-        "qwen3.5-9b" = {
-          name = "Qwen3.5 9B (tools / ajax placeholder)";
-          cmd = serveModel { file = "Qwen3.5-9B-Q4_K_M.gguf"; ctx = 32768; };
-          aliases = [ "tools" "ajax" ];
-        };
-      };
-    };
-  };
-
-  # llama-swap is reachable only from argon (10.8.90.205) on the LAN.
-  # radon's firewall uses the iptables backend, so this is a raw rule in the
-  # nixos-fw chain (extraStopCommands removes it again on firewall restart).
-  networking.firewall.extraCommands = ''
-    iptables -A nixos-fw -p tcp -s 10.8.90.205 --dport 9100 -j nixos-fw-accept
-  '';
-  networking.firewall.extraStopCommands = ''
-    iptables -D nixos-fw -p tcp -s 10.8.90.205 --dport 9100 -j nixos-fw-accept 2>/dev/null || true
-  '';
-
-  # The GGUF weights live here (moved out of the volatile /tmp download dir);
-  # created owned by the service user so llama-swap can read them.
-  systemd.tmpfiles.rules = [
-    "d /var/lib/llama/models 0750 llama-swap llama-swap -"
-  ];
 
   # Auto-mount data drives (mounted by systemd at boot; nofail = won't block boot if absent)
   fileSystems."/mnt/games" = {
@@ -143,7 +77,6 @@ in
   # Host-specific system packages
   environment.systemPackages = with pkgs; [
     inputs.zen-browser.packages.${pkgs.stdenv.hostPlatform.system}.default
-    vscode
   ];
 
   boot = {

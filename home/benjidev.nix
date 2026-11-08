@@ -70,8 +70,6 @@ in {
     home.fish = {
       enable = true;
       extraAliases = {
-        # Needs the decrypted agenix path, which is only available in NixOS scope.
-        cop3223c = "ssh $(cat ${config.age.secrets."cop3223c".path})";
         # radon-only: the ssh config for argon lives in this user file.
         argon = "ssh argon";
       };
@@ -91,6 +89,11 @@ in {
           HostName = "10.8.90.205";
           Port = 205;
           User = "root";
+        };
+
+        "openstackmc" = {
+          HostName = "100.89.184.16";
+          User = "ubuntu";
         };
       };
     };

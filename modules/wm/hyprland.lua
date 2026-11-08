@@ -75,7 +75,9 @@ hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("noctalia msg settings-toggle"))
 -- "binding modkeys only" docs). The release flag + arming logic means it does
 -- NOT fire after combos like SUPER+D. caps:super is set via kb_options, so the
 -- physical CapsLock key emits SUPER_L too and is covered by this same bind.
-hl.bind("SUPER + SUPER_L", hl.dsp.exec_cmd("noctalia msg panel-toggle control-center"), { release = true })
+-- Suppress the control-center toggle if a Super+scroll just happened: remove
+-- the flag and do nothing; otherwise toggle as a normal bare tap.
+hl.bind("SUPER + SUPER_L", hl.dsp.exec_cmd("f=\"${XDG_RUNTIME_DIR:-/tmp}/hypr-caps-scrolled\"; if [ -f \"$f\" ]; then rm -f \"$f\"; else noctalia msg panel-toggle control-center; fi"), { release = true })
 
 -- windows
 hl.bind(mainMod .. " + Return", hl.dsp.exec_cmd(terminal))
@@ -106,6 +108,14 @@ hl.bind(mainMod .. " + mouse_up",    hl.dsp.layout("move -col"))
 -- Super+Shift+scroll switches workspaces (no numeric workspace binds)
 hl.bind(mainMod .. " + SHIFT + mouse_down", hl.dsp.focus({ workspace = "e+1" }))
 hl.bind(mainMod .. " + SHIFT + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
+-- Track that a Super+scroll combo happened so the mod-only release bind below
+-- does NOT open the control center after scrolling (Hyprland bug: scroll
+-- combos still trigger SUPER+SUPER_L on release).
+local capsScrollFlag = "\"${XDG_RUNTIME_DIR:-/tmp}/hypr-caps-scrolled\""
+hl.bind(mainMod .. " + mouse_down",  hl.dsp.exec_cmd("touch " .. capsScrollFlag))
+hl.bind(mainMod .. " + mouse_up",    hl.dsp.exec_cmd("touch " .. capsScrollFlag))
+hl.bind(mainMod .. " + SHIFT + mouse_down", hl.dsp.exec_cmd("touch " .. capsScrollFlag))
+hl.bind(mainMod .. " + SHIFT + mouse_up",   hl.dsp.exec_cmd("touch " .. capsScrollFlag))
 -- Super+N jumps to a fresh workspace: `empty` (= first available empty
 -- workspace; "workspace new" is not a valid Hyprland selector).
 hl.bind(mainMod .. " + N",     hl.dsp.focus({ workspace = "empty" }))
@@ -147,6 +157,7 @@ hl.window_rule({
 
 -- autostart (desktop-wide)
 hl.on("hyprland.start", function()
+    hl.exec_cmd("rm -f \"${XDG_RUNTIME_DIR:-/tmp}/hypr-caps-scrolled\"")
     hl.exec_cmd("noctalia")
     hl.exec_cmd("netbird-ui")
     hl.exec_cmd("hyprctl setcursor Bibata-Modern-Classic 24")
